@@ -40,9 +40,9 @@ Ask: "Is this your first submission to the App Store, or an update to an existin
 
 ### 3. Auth Gate
 
-Start the scan session (now that we have bundleId and scanType):
+Start the scan session (now that we have bundleId, scanType, and platform):
 ```
-{baseDir}/../appstorereject/scripts/asr-api.sh POST "/api/scans/start" '{"bundleId":"<bundle_id>","scanType":"<first_submission|update>"}'
+{baseDir}/../appstorereject/scripts/asr-api.sh POST "/api/scans/start" '{"bundleId":"<bundle_id>","scanType":"<first_submission|update>","platform":"<ios|android>"}'
 ```
 
 - **200:** Proceed. Save the `scanToken` from the response.

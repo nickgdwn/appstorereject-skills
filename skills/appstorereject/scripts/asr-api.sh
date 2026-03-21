@@ -138,8 +138,8 @@ while true; do
     exit 1
   fi
 
-  # Retry on 5xx
-  if [ "$http_code" -ge 500 ] 2>/dev/null && [ "$attempt" -lt "$MAX_RETRIES" ]; then
+  # Retry on 5xx or 429 (rate limited)
+  if { [ "$http_code" -ge 500 ] 2>/dev/null || [ "$http_code" = "429" ]; } && [ "$attempt" -lt "$MAX_RETRIES" ]; then
     attempt=$((attempt + 1))
     sleep "$backoff"
     backoff=$((backoff * 3))
