@@ -1,0 +1,46 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/refs/heads/main/marketplace/marketplace.schema.json",
+  "name": "appstorereject-skills",
+  "version": "1.0.0",
+  "owner": {
+    "name": "nickgdwn"
+  },
+  "metadata": {
+    "description": "App Store rejection scanner and resolver skills for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "appstorereject",
+      "description": "Scan your app for App Store rejection risks before submission, and resolve rejections with guided fixes.",
+      "repository": "https://github.com/nickgdwn/appstorereject-skills",
+      "version": "1.0.0",
+      "author": {
+        "name": "nickgdwn"
+      },
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "ios",
+        "app-store",
+        "apple",
+        "rejection",
+        "review",
+        "compliance"
+      ],
+      "tags": [
+        "ios",
+        "app-store",
+        "apple",
+        "rejection",
+        "review",
+        "compliance"
+      ],
+      "source": "./",
+      "skills": [
+        "./skills/appstorereject",
+        "./skills/appstorereject-scan",
+        "./skills/appstorereject-resolve"
+      ]
+    }
+  ]
+}

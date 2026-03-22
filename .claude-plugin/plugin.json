@@ -1,0 +1,23 @@
+{
+  "name": "appstorereject",
+  "version": "1.0.0",
+  "description": "Scan your app for App Store rejection risks before submission, and resolve rejections with guided fixes.",
+  "author": {
+    "name": "nickgdwn"
+  },
+  "repository": "https://github.com/nickgdwn/appstorereject-skills",
+  "license": "MIT",
+  "keywords": [
+    "ios",
+    "app-store",
+    "apple",
+    "rejection",
+    "review",
+    "compliance"
+  ],
+  "skills": [
+    "./skills/appstorereject",
+    "./skills/appstorereject-scan",
+    "./skills/appstorereject-resolve"
+  ]
+}
