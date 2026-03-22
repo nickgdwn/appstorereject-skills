@@ -8,13 +8,13 @@ Works with Claude Code, Cursor, GitHub Copilot, Gemini CLI, and 30+ other AI cod
 
 ```bash
 # All skills (recommended)
-npx skills add appstorereject/skills
+npx skills add nickgdwn/appstorereject-skills
 
 # Just the pre-submission scanner
-npx skills add appstorereject/skills --skill appstorereject-scan
+npx skills add nickgdwn/appstorereject-skills --skill appstorereject-scan
 
 # Just the rejection resolver
-npx skills add appstorereject/skills --skill appstorereject-resolve
+npx skills add nickgdwn/appstorereject-skills --skill appstorereject-resolve
 ```
 
 ## Skills
