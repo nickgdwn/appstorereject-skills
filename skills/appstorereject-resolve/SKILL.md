@@ -35,10 +35,9 @@ Once you have the slug (from search results or known mapping):
 
 Show the developer:
 1. **Title and description** of the rejection
-2. **Difficulty level** and **estimated resolution time**
+2. **Difficulty level**
 3. **Resolution steps** in order (if authenticated)
-4. **Before/after examples** (if available and authenticated)
-5. **Community solutions** ranked by effectiveness (if authenticated)
+4. **Community solutions** ranked by effectiveness (if authenticated)
 
 ## Step 4: Plan Fix in Codebase Context
 
