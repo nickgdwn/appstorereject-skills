@@ -83,10 +83,12 @@ Present findings as a summary table:
 | 3 | 2.1       | MED  | Placeholder text in Settings screen |
 ```
 
-For HIGH confidence findings, batch-fetch resolution details:
+For HIGH confidence findings, batch-fetch resolution details using the guideline codes from step 5:
 ```
-{baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?slugs=<slug1>,<slug2>,..."
+{baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?codes=<code1>,<code2>,..."
 ```
+
+Example: `?codes=5.1.1,2.1,3.1.1` — the API accepts guideline codes directly (up to 10). You can also use `?slugs=<slug1>,<slug2>` if you have exact slugs from a prior search.
 
 Present each high-confidence finding with its resolution steps in the context of the developer's codebase. For medium/low findings, give a brief explanation and link to the full guide at appstorereject.com.
 
