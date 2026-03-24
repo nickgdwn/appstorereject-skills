@@ -82,9 +82,11 @@ Before presenting results, cross-reference your findings against the check defin
 3. Confirm the `Finding` text follows the check's `Finding template:`
 4. Remove any findings that don't correspond to a defined check (move to "Additional observations")
 
-### 6. Report to Developer
+### 6. Fetch & Present Resolution Guides (CRITICAL)
 
-Present findings as a summary table, sorted by risk (HIGH first, then MED, then LOW):
+Resolution guides are the **primary output** of this scan — they contain community-backed, tested resolution steps. The findings table alone is not sufficient.
+
+**6a. Present the findings table** sorted by risk (HIGH first, then MED, then LOW):
 
 ```
 | # | Guideline | Risk | Finding |
@@ -94,24 +96,37 @@ Present findings as a summary table, sorted by risk (HIGH first, then MED, then 
 | 3 | 2.1       | MED  | 3 placeholder/TODO instances in user-facing code |
 ```
 
-For HIGH and MEDIUM confidence findings, batch-fetch resolution details using the guideline codes from step 5:
+**6b. Collect slugs from your findings.** During step 5, each check definition includes a `Slug:` field. Collect the slugs for all HIGH and MED findings where `Slug:` is not `—`.
+
+**6c. Batch-fetch resolution guides using the slugs:**
 ```
-{baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?codes=<code1>,<code2>,..."
+{baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?slugs=<slug1>,<slug2>,..."
 ```
 
-Example: `?codes=5.1.1,2.1,3.1.1` — the API accepts guideline codes directly (up to 10). You can also use `?slugs=<slug1>,<slug2>` if you have exact slugs from a prior search.
+Example: `?slugs=guideline-511-privacy-missing-privacy-manifest-2,guideline-21-app-completeness-placeholder-content-still-present-2`
 
-The response returns `{"data": [...]}` where each item may include:
-- `resolutionSteps` — a **markdown string** (not an array). Display it directly as formatted text.
-- `solutions` — community-submitted solutions (authenticated requests only)
-- `exampleEmail` — example rejection email text
+Use the **exact slug values** from the check definitions. Do NOT invent, guess, or modify slugs.
 
-**Displaying results:** For each finding, if the batch response included a matching entry:
-1. Show the resolution steps verbatim (they are already formatted markdown with numbered steps)
+**6d. Validate the response:**
+
+The response returns `{"data": [...]}`. Check for these issues:
+
+1. **Empty response `{"data":[]}` is an error.** Report it to the developer: "Could not fetch resolution guides — slugs returned no matches. The findings table above lists your issues, but detailed resolution steps are unavailable." Do NOT silently substitute your own resolution steps.
+
+2. **Response items missing `resolutionSteps` field** means the request was **unauthenticated**. The API only returns resolution steps for authenticated requests. Tell the developer: "Resolution guides require an API key. Run `appstorereject --setup` to configure authentication, then re-scan."
+
+3. **Partial matches** (some slugs returned data, others didn't) — show resolution guides for the ones that matched. For unmatched slugs, note: "No resolution guide available yet for: {check_name}. See appstorereject.com for updates."
+
+**6e. Display resolution guides for each finding:**
+
+For each finding that has a matching API response with `resolutionSteps`:
+1. Show the `resolutionSteps` verbatim — they are a **markdown string** (not an array). Display directly as formatted text.
 2. Add context specific to the developer's codebase (e.g., which file to edit, what value to set)
 3. If a `prevention` section exists in the steps, include it
 
-If a finding's guideline code returned no match from the API, provide your own fix guidance based on the check definition. For LOW confidence findings, give a brief explanation and link to the full guide at appstorereject.com.
+For findings where `Slug: —` (no resolution guide exists in the database yet), provide brief fix guidance based on the check definition and note that a full community guide is not yet available.
+
+**NEVER silently replace API resolution guides with your own generated steps.** The API guides are maintained by the community and contain tested, specific advice. LLM-generated alternatives are generic and may miss critical details.
 
 ### 7. Report Analytics
 

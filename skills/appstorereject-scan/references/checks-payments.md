@@ -9,6 +9,7 @@ Guideline: 3.1.1
 Confidence: HIGH when external payment URLs or SDKs are found in source code
 Risk: HIGH
 Finding template: "External payment URLs or SDKs found ({payment_refs})"
+Slug: guideline-311-in-app-purchase-requirement-2
 
 #### Native iOS
 - Grep all `.swift`, `.m`, `.h`, `.storyboard`, `.xib` files for:
@@ -52,6 +53,7 @@ Guideline: 3.1.1
 Confidence: HIGH when premium features are detected but no IAP framework is integrated
 Risk: HIGH
 Finding template: "Premium features detected but no IAP framework integrated"
+Slug: guideline-311-in-app-purchase-requirement-2
 
 #### Native iOS
 - Grep for premium/subscription indicators:
@@ -96,6 +98,7 @@ Guideline: 3.1.1
 Confidence: MEDIUM when IAP product IDs in code do not match StoreKit configuration
 Risk: MED
 Finding template: "IAP product IDs may not match store configuration"
+Slug: guideline-21-app-completeness-iap-products-not-found-in-binary-2
 
 #### Native iOS
 - Grep source for product ID strings — typically formatted as `com.bundleid.product`:
@@ -132,6 +135,7 @@ Guideline: 3.1.2
 Confidence: HIGH when subscription IAP exists but no restore purchases flow is implemented (iOS)
 Risk: HIGH
 Finding template: "Subscription IAP without restore purchases mechanism"
+Slug: —
 
 #### Native iOS
 - First confirm subscriptions exist:
@@ -169,6 +173,7 @@ Guideline: 3.1.2
 Confidence: MEDIUM when auto-renewing subscriptions exist without clear pricing/terms display
 Risk: MED
 Finding template: "Auto-renewing subscription without full pricing/terms display"
+Slug: guideline-312-subscriptions-calculated-pricing-more-prominent-than-billed-amount-2
 
 #### Native iOS
 - Confirm auto-renewing subscriptions:
@@ -201,6 +206,7 @@ Guideline: 3.1.2
 Confidence: MEDIUM when free trial is offered without clear post-trial pricing disclosure
 Risk: MED
 Finding template: "Free trial offered without post-trial pricing disclosure"
+Slug: guideline-312-subscriptions-free-trial-transparency-2
 
 #### Native iOS
 - Grep for trial indicators:
@@ -234,6 +240,7 @@ Guideline: 3.1.1
 Confidence: HIGH when tip/donation features use external payment instead of IAP
 Risk: HIGH
 Finding template: "Tip/donation feature using external payment ({payment_method})"
+Slug: —
 
 #### Native iOS
 - Grep for tip/donation indicators:
@@ -268,6 +275,7 @@ Guideline: 3.1.1
 Confidence: LOW when IAP appears to be used for physical goods (informational — should use external payment)
 Risk: LOW
 Finding template: "Possible physical goods sold via IAP instead of external payment"
+Slug: —
 
 #### Native iOS
 - Grep for physical goods indicators near IAP code:
@@ -297,6 +305,7 @@ Guideline: 3.1.1
 Confidence: MEDIUM when content appears to be unlocked via web purchase without in-app access
 Risk: MED
 Finding template: "Content unlocked via web purchase without in-app IAP alternative"
+Slug: —
 
 #### Native iOS
 - Grep for web-purchase restoration patterns:
@@ -329,6 +338,7 @@ Guideline: Billing
 Confidence: MEDIUM when Play Billing Library version is outdated
 Risk: MED
 Finding template: "Play Billing Library version {current_version} below required 6.0.0"
+Slug: —
 
 #### Native iOS
 - Not applicable

@@ -9,6 +9,7 @@ Guideline: 2.1
 Confidence: HIGH when lorem ipsum, TODO markers, or placeholder text found in user-facing files
 Risk: HIGH
 Finding template: "{match_count} placeholder/TODO instances in user-facing code"
+Slug: guideline-21-app-completeness-placeholder-content-still-present-2
 
 #### Native iOS
 - Grep ALL user-facing files for placeholder text:
@@ -47,6 +48,7 @@ Guideline: 2.1
 Confidence: HIGH when debug/development flags or URLs are found in production-path code
 Risk: HIGH
 Finding template: "Debug flags or development URLs in production code"
+Slug: —
 
 #### Native iOS
 - Grep for debug indicators in non-test Swift/ObjC files:
@@ -88,6 +90,7 @@ Guideline: 2.1
 Confidence: HIGH when hardcoded API keys, test accounts, or passwords found in source
 Risk: HIGH
 Finding template: "Hardcoded credentials or test API keys in source"
+Slug: —
 
 #### Native iOS
 - Grep all source files (excluding tests) for:
@@ -130,6 +133,7 @@ Guideline: 2.1
 Confidence: MEDIUM when URLs pointing to localhost, test domains, or unreachable hosts found in source
 Risk: MED
 Finding template: "{url_count} development/localhost URLs in source code"
+Slug: —
 
 #### Native iOS
 - Grep all source files for URL patterns:
@@ -166,6 +170,7 @@ Guideline: 2.1
 Confidence: MEDIUM when authentication flow exists but no demo credentials are documented
 Risk: MED
 Finding template: "Auth flow exists but no demo account documentation found"
+Slug: guideline-21-app-completeness-demo-account-not-working-2
 
 #### Native iOS
 - Detect authentication flow:
@@ -202,6 +207,7 @@ Guideline: 2.1
 Confidence: HIGH when required configuration files are missing that would cause a startup crash
 Risk: HIGH
 Finding template: "Required configuration missing — {dependency} will crash on launch"
+Slug: guideline-21-app-completeness-crashes-on-launch-2
 
 #### Native iOS
 - Check for required config files based on SDK usage:
@@ -248,6 +254,7 @@ Guideline: 2.1
 Confidence: MEDIUM when localization files are partially translated or mixed languages detected
 Risk: MED
 Finding template: "Localization files partially translated ({missing_count} missing translations)"
+Slug: —
 
 #### Native iOS
 - Glob: `**/*.lproj/Localizable.strings`, `**/*.lproj/*.strings`
@@ -286,6 +293,7 @@ Guideline: 2.1
 Confidence: HIGH when no app icon is configured in the project
 Risk: HIGH
 Finding template: "App icon has no image files assigned"
+Slug: guideline-21-app-completeness-missing-app-icon-2
 
 #### Native iOS
 - Check `Assets.xcassets/AppIcon.appiconset/`:
@@ -322,6 +330,7 @@ Guideline: 2.1
 Confidence: HIGH when no launch screen / splash screen is configured (iOS)
 Risk: HIGH
 Finding template: "No launch screen configured"
+Slug: guideline-21-app-completeness-missing-launch-screen-2
 
 #### Native iOS
 - Check for launch screen:
@@ -364,6 +373,7 @@ Guideline: 2.1
 Confidence: HIGH when "Beta", "Test", "Debug", or "Dev" appears in the app display name or bundle info
 Risk: HIGH
 Finding template: "Beta/test/debug text found in app identity: '{beta_text}'"
+Slug: —
 
 #### Native iOS
 - Check `Info.plist` for beta indicators in:
@@ -401,6 +411,7 @@ Guideline: 2.1
 Confidence: HIGH when Expo app.json contains default/placeholder configuration values
 Risk: HIGH
 Finding template: "Expo app.json contains default/placeholder configuration"
+Slug: —
 
 #### Native iOS
 - Not directly applicable (Expo-specific check)
@@ -436,6 +447,7 @@ Guideline: 2.1
 Confidence: HIGH when Android release build is configured as debuggable
 Risk: HIGH
 Finding template: "Android release build configured as debuggable"
+Slug: —
 
 #### Native iOS
 - Not directly applicable (iOS handles this via build configuration/provisioning)

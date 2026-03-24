@@ -9,6 +9,7 @@ Guideline: 5.1.1
 Confidence: HIGH when no PrivacyInfo.xcprivacy file exists in an iOS project
 Risk: HIGH
 Finding template: "PrivacyInfo.xcprivacy missing — required since Spring 2024"
+Slug: guideline-511-privacy-missing-privacy-manifest-2
 
 #### Native iOS
 Search for `PrivacyInfo.xcprivacy` anywhere under the project root. Also check that the file is referenced in the Xcode project:
@@ -40,6 +41,7 @@ Guideline: 5.1.1
 Confidence: HIGH when ATT framework is imported but NSUserTrackingUsageDescription is missing
 Risk: HIGH
 Finding template: "ATT framework imported without NSUserTrackingUsageDescription"
+Slug: guideline-511-privacy-missing-tracking-declaration-2
 
 #### Native iOS
 - Grep all `.swift`, `.m`, `.h` files for:
@@ -82,6 +84,7 @@ Guideline: 5.1.1
 Confidence: HIGH when hardware/data access frameworks are used without corresponding purpose strings
 Risk: HIGH
 Finding template: "{plist_key} missing for {framework} usage"
+Slug: guideline-511-privacy-insufficient-purpose-strings-2
 
 #### Native iOS
 For each pair, grep source for the framework usage and check Info.plist for the key:
@@ -138,6 +141,7 @@ Guideline: 5.1.1
 Confidence: MEDIUM when third-party SDKs are present but not declared in privacy manifest
 Risk: MED
 Finding template: "{sdk_count} third-party SDKs not declared in privacy manifest"
+Slug: —
 
 #### Native iOS
 - Check `Podfile` or `Package.swift` for known SDKs that access required-reason APIs:
@@ -176,6 +180,7 @@ Guideline: 5.1.2
 Confidence: MEDIUM when network calls exist but no privacy nutrition label declarations found
 Risk: MED
 Finding template: "Data collection detected but not declared in App Store privacy nutrition label"
+Slug: —
 
 #### Native iOS
 - Grep for network activity patterns:
@@ -211,6 +216,7 @@ Guideline: 5.1.1
 Confidence: HIGH when no privacy policy URL is configured anywhere in the project
 Risk: HIGH
 Finding template: "No privacy policy URL found in project"
+Slug: guideline-511-data-collection-and-storage-privacy-policy-2
 
 #### Native iOS
 - Check `Info.plist` for custom keys containing "privacy" or "policy" (no standard key, but some apps embed it)
@@ -243,6 +249,7 @@ Guideline: 5.1.1
 Confidence: MEDIUM when permissions are declared but corresponding APIs are never called in source code
 Risk: MED
 Finding template: "{unused_count} declared permissions with no corresponding API usage"
+Slug: guideline-511-privacy-excessive-permissions-2
 
 #### Native iOS
 - Parse `Info.plist` for all `NS*UsageDescription` keys
@@ -283,6 +290,7 @@ Guideline: 5.1.1
 Confidence: HIGH when background location is declared without proper configuration or justification
 Risk: HIGH
 Finding template: "Background location declared without required configuration"
+Slug: guideline-511-privacy-background-location-2
 
 #### Native iOS
 - Check `Info.plist` for `UIBackgroundModes` containing `location`
@@ -322,6 +330,7 @@ Guideline: 5.1.1
 Confidence: MEDIUM when Contacts framework is imported without proper purpose string or with broad access patterns
 Risk: MED
 Finding template: "Contacts access detected without proper purpose string or with broad access"
+Slug: —
 
 #### Native iOS
 - Grep for Contacts framework usage:
@@ -357,6 +366,7 @@ Guideline: 5.1.1
 Confidence: HIGH when HealthKit entitlement exists without proper Info.plist descriptions
 Risk: HIGH
 Finding template: "HealthKit entitlement without required Info.plist descriptions"
+Slug: guideline-511-privacy-health-data-access-2
 
 #### Native iOS
 - Check `*.entitlements` files for `com.apple.developer.healthkit`
@@ -394,6 +404,7 @@ Guideline: Data Safety
 Confidence: MEDIUM when dangerous permissions are declared without clear code-level justification
 Risk: MED
 Finding template: "{dangerous_count} dangerous Android permissions without clear justification"
+Slug: —
 
 #### Native iOS
 - Not applicable (iOS uses purpose strings instead of permission tiers)
@@ -434,6 +445,7 @@ Guideline: Data Safety
 Confidence: HIGH when an Android app has no data safety metadata configured
 Risk: HIGH
 Finding template: "Android app has no data safety metadata configured"
+Slug: —
 
 #### Native iOS
 - Not applicable (iOS uses App Store Connect privacy labels, configured outside the codebase)

@@ -5,6 +5,7 @@ Guideline: 2.x
 Confidence: MEDIUM when large asset files, uncompressed images, or embedded videos are detected
 Risk: MED
 Finding template: "Large asset files ({estimated_size}) may exceed store size limits"
+Slug: —
 
 #### Native iOS
 Check the Xcode project for large image assets in `Assets.xcassets/` — look for PNG/JPG files over 2MB. Grep for `.mov`, `.mp4`, `.avi` files bundled in the project directory. Check `Build Settings > COMPRESS_PNG_FILES` and `STRIP_PNG_TEXT` are enabled. Look for uncompressed audio files (`.wav`, `.aiff`) that could be converted to `.m4a` or `.mp3`.
@@ -27,6 +28,7 @@ Guideline: 2.5.4
 Confidence: MEDIUM when UIBackgroundModes contains modes not clearly justified by app functionality
 Risk: MED
 Finding template: "UIBackgroundModes {unjustified_modes} declared without corresponding implementation"
+Slug: guideline-254-software-requirements-declaring-unused-background-modes-2
 
 #### Native iOS
 Open `Info.plist` and check the `UIBackgroundModes` array. Flag any combination of: `audio` (is there a media player?), `location` (is continuous location tracking necessary?), `fetch` (is background refresh justified?), `remote-notification`, `voip`, `bluetooth-central`, `bluetooth-peripheral`, `processing`, `nearby-interaction`. Cross-reference each declared mode against actual feature code — grep for `AVAudioSession`, `CLLocationManager`, `BGAppRefreshTask`, `BGProcessingTask` to verify usage.
@@ -49,6 +51,7 @@ Guideline: 2.x
 Confidence: HIGH when arm64 is excluded from build architectures on iOS
 Risk: HIGH
 Finding template: "arm64 excluded from build architectures"
+Slug: —
 
 #### Native iOS
 Open `<Project>.xcodeproj/project.pbxproj` and search for `EXCLUDED_ARCHS`. If `arm64` appears in the value, the build will not run on Apple Silicon simulators or devices properly. Check `ARCHS` setting — it should be `$(ARCHS_STANDARD)` or explicitly include `arm64`. Also check `VALID_ARCHS` if present. Grep for `armv7` — apps still targeting armv7 exclusively cannot be submitted to App Store.
@@ -71,6 +74,7 @@ Guideline: 2.x
 Confidence: LOW when code patterns suggest unbounded memory usage
 Risk: LOW
 Finding template: "Code patterns suggest unbounded memory usage in {file_path}"
+Slug: —
 
 #### Native iOS
 Grep for `UIImage(named:)` used inside `UITableView`/`UICollectionView` cells without caching — this reloads from disk on every scroll. Check for `NSCache` usage — absence of any cache with memory limits is a flag. Search for `applicationDidReceiveMemoryWarning` or `didReceiveMemoryWarning` — if not implemented in any view controller, memory pressure is unhandled. Look for large `Data` objects loaded fully into memory: `Data(contentsOf:)` on remote URLs without streaming.
@@ -93,6 +97,7 @@ Guideline: Android
 Confidence: HIGH when targetSdkVersion is below API 34
 Risk: HIGH
 Finding template: "targetSdkVersion {current_version} below required API 34"
+Slug: —
 
 #### Native iOS
 Not applicable — iOS uses minimum deployment target, not a target SDK concept. Check `IPHONEOS_DEPLOYMENT_TARGET` in `project.pbxproj` — Apple requires apps to be built with the latest SDK (Xcode). Apps built with SDKs more than one major version old may be flagged.
