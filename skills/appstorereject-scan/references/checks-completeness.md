@@ -7,6 +7,8 @@
 ### Check: placeholder_content
 Guideline: 2.1
 Confidence: HIGH when lorem ipsum, TODO markers, or placeholder text found in user-facing files
+Risk: HIGH
+Finding template: "{match_count} placeholder/TODO instances in user-facing code"
 
 #### Native iOS
 - Grep ALL user-facing files for placeholder text:
@@ -43,6 +45,8 @@ Context template: "Found {match_count} placeholder/TODO instances in {file_count
 ### Check: debug_flags_enabled
 Guideline: 2.1
 Confidence: HIGH when debug/development flags or URLs are found in production-path code
+Risk: HIGH
+Finding template: "Debug flags or development URLs in production code"
 
 #### Native iOS
 - Grep for debug indicators in non-test Swift/ObjC files:
@@ -82,6 +86,8 @@ Context template: "Found {debug_count} debug indicators in production code. Deve
 ### Check: test_credentials_exposed
 Guideline: 2.1
 Confidence: HIGH when hardcoded API keys, test accounts, or passwords found in source
+Risk: HIGH
+Finding template: "Hardcoded credentials or test API keys in source"
 
 #### Native iOS
 - Grep all source files (excluding tests) for:
@@ -122,6 +128,8 @@ Context template: "Found {credential_count} potential hardcoded credentials in {
 ### Check: broken_links
 Guideline: 2.1
 Confidence: MEDIUM when URLs pointing to localhost, test domains, or unreachable hosts found in source
+Risk: MED
+Finding template: "{url_count} development/localhost URLs in source code"
 
 #### Native iOS
 - Grep all source files for URL patterns:
@@ -156,6 +164,8 @@ Context template: "Found {url_count} potentially broken or development URLs in {
 ### Check: missing_demo_account
 Guideline: 2.1
 Confidence: MEDIUM when authentication flow exists but no demo credentials are documented
+Risk: MED
+Finding template: "Auth flow exists but no demo account documentation found"
 
 #### Native iOS
 - Detect authentication flow:
@@ -190,6 +200,8 @@ Context template: "Authentication flow detected ({auth_methods}) but no demo acc
 ### Check: crash_on_launch
 Guideline: 2.1
 Confidence: HIGH when required configuration files are missing that would cause a startup crash
+Risk: HIGH
+Finding template: "Required configuration missing — {dependency} will crash on launch"
 
 #### Native iOS
 - Check for required config files based on SDK usage:
@@ -234,6 +246,8 @@ Context template: "Potential crash-on-launch: {missing_config} is missing but re
 ### Check: incomplete_localization
 Guideline: 2.1
 Confidence: MEDIUM when localization files are partially translated or mixed languages detected
+Risk: MED
+Finding template: "Localization files partially translated ({missing_count} missing translations)"
 
 #### Native iOS
 - Glob: `**/*.lproj/Localizable.strings`, `**/*.lproj/*.strings`
@@ -270,6 +284,8 @@ Context template: "Found {locale_count} localizations. Completeness: {completene
 ### Check: missing_app_icon
 Guideline: 2.1
 Confidence: HIGH when no app icon is configured in the project
+Risk: HIGH
+Finding template: "App icon has no image files assigned"
 
 #### Native iOS
 - Check `Assets.xcassets/AppIcon.appiconset/`:
@@ -304,6 +320,8 @@ Context template: "App icon issue: {icon_status}. {missing_details}. Apple requi
 ### Check: missing_launch_screen
 Guideline: 2.1
 Confidence: HIGH when no launch screen / splash screen is configured (iOS)
+Risk: HIGH
+Finding template: "No launch screen configured"
 
 #### Native iOS
 - Check for launch screen:
@@ -344,6 +362,8 @@ Context template: "Launch screen: {launch_screen_status}. {details}. iOS apps wi
 ### Check: beta_indicators
 Guideline: 2.1
 Confidence: HIGH when "Beta", "Test", "Debug", or "Dev" appears in the app display name or bundle info
+Risk: HIGH
+Finding template: "Beta/test/debug text found in app identity: '{beta_text}'"
 
 #### Native iOS
 - Check `Info.plist` for beta indicators in:
@@ -379,6 +399,8 @@ Context template: "Beta indicator found in app identity: '{beta_text}' in {locat
 ### Check: expo_placeholder_config
 Guideline: 2.1
 Confidence: HIGH when Expo app.json contains default/placeholder configuration values
+Risk: HIGH
+Finding template: "Expo app.json contains default/placeholder configuration"
 
 #### Native iOS
 - Not directly applicable (Expo-specific check)
@@ -412,6 +434,8 @@ Context template: "Expo placeholder configuration detected: {placeholder_items}.
 ### Check: android_debug_build
 Guideline: 2.1
 Confidence: HIGH when Android release build is configured as debuggable
+Risk: HIGH
+Finding template: "Android release build configured as debuggable"
 
 #### Native iOS
 - Not directly applicable (iOS handles this via build configuration/provisioning)

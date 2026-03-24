@@ -3,6 +3,8 @@
 ### Check: missing_accessibility_labels
 Guideline: 4.x
 Confidence: MEDIUM when interactive elements lack accessibility identifiers
+Risk: MED
+Finding template: "{count} interactive elements without accessibility labels"
 
 #### Native iOS
 Grep for `UIButton`, `UIImageView`, `UISlider`, `UISwitch`, and custom `UIView` subclasses. For each interactive element, check that `.accessibilityLabel` is set or that the element has descriptive text content. Search for `isAccessibilityElement = true` without a corresponding `accessibilityLabel`. Check XIB/Storyboard files for `accessibilityIdentifier` and `accessibilityLabel` attributes on interactive controls — missing values appear as empty strings in the XML.
@@ -23,6 +25,8 @@ Context template: "Found {count} interactive element(s) without accessibility la
 ### Check: non_native_ui_patterns
 Guideline: 4.x
 Confidence: MEDIUM when platform-inappropriate navigation or UI patterns are detected
+Risk: MED
+Finding template: "Platform-inappropriate UI patterns detected ({pattern_name})"
 
 #### Native iOS
 Grep for hamburger menu patterns: three-line menu icons (`≡`), `DrawerLayout`, `NavigationDrawer`, or sidebar navigation toggled by a hamburger button. These are Android patterns — iOS uses tab bars (`UITabBarController`) or navigation stacks. Check for bottom navigation bars implemented without `UITabBarController` (custom views mimicking Android bottom nav). Look for `Back` buttons labeled "Back" without a title — iOS convention is the previous screen's title.
@@ -43,6 +47,8 @@ Context template: "Found {pattern_name} in {file_path} — this is a {source_pla
 ### Check: missing_dark_mode_support
 Guideline: 4.x
 Confidence: LOW when no dark mode color definitions are found
+Risk: LOW
+Finding template: "No dark mode color definitions found"
 
 #### Native iOS
 Check `Assets.xcassets` for color sets — each color used in the app should have both `Any Appearance` and `Dark` variants. Grep `Info.plist` for `UIUserInterfaceStyle` — if set to `Light`, dark mode is explicitly disabled (reviewers may flag this for non-utility apps). Search Swift/ObjC source for hardcoded color values like `UIColor(red:green:blue:)` or hex color initializers instead of semantic colors (`UIColor.label`, `UIColor.systemBackground`). Check Storyboard/XIB files for hardcoded color attributes.
@@ -63,6 +69,8 @@ Context template: "No dark mode color definitions found — {evidence} (e.g. mis
 ### Check: ipad_layout_missing
 Guideline: 4.x
 Confidence: MEDIUM when app targets iPad (Universal) but shows no iPad-specific layout adaptations
+Risk: MED
+Finding template: "Universal (iPad) app with no iPad-specific layout adaptations"
 
 #### Native iOS
 Check `Info.plist` for `UIDeviceFamily` — if it includes `2` (iPad), the app targets iPad. Then check for `UISplitViewController` usage, `UIPopoverPresentationController`, or size class adaptations (`traitCollection.horizontalSizeClass == .regular`). Grep Storyboard files for iPad-specific size class overrides. If none are found and the app is Universal, it is likely just phone layout stretched on iPad. Check `LaunchScreen.storyboard` — a phone-sized launch screen on iPad is a signal.

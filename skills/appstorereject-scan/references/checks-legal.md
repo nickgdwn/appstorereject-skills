@@ -3,6 +3,8 @@
 ### Check: missing_eula_for_subscriptions
 Guideline: 5.2.x
 Confidence: HIGH when auto-renewing subscription products are configured without Terms of Service or EULA
+Risk: HIGH
+Finding template: "Subscription IAP without Terms of Service or EULA in purchase flow"
 
 #### Native iOS
 Grep source for `SKProductSubscriptionPeriod`, `StoreKit`, `Product.SubscriptionInfo`, or `StoreKit2` subscription purchase calls. If subscription products are present, verify the app displays a Terms of Service / EULA link before or during the purchase flow. Search for "terms" or "EULA" in the UI source — check that it links to a real URL, not a placeholder. Apple requires the standard EULA or a custom EULA linked in App Store Connect AND displayed in-app before purchase. Check `Info.plist` for `NSUserTrackingUsageDescription` — unrelated but commonly missing alongside subscription legal gaps.
@@ -23,6 +25,8 @@ Context template: "Found subscription purchase code in {file_paths} but no Terms
 ### Check: missing_age_rating
 Guideline: 5.2.x
 Confidence: MEDIUM when content suggests age restrictions but appropriate rating configuration is absent
+Risk: MED
+Finding template: "Mature content keywords found without age gate or verification"
 
 #### Native iOS
 Grep source files and string resources for keywords indicating mature content: `gambling`, `casino`, `poker`, `slots`, `alcohol`, `beer`, `wine`, `liquor`, `tobacco`, `vape`, `violence`, `blood`, `gore`, `adult`, `explicit`, `nude`, `18+`, `21+`. If any are found, check App Store Connect age rating configuration — this can't be verified from source alone, but flag the presence of these keywords for manual review. Also check `Info.plist` for `UIRequiredDeviceCapabilities` — some capabilities imply mature use contexts.
@@ -43,6 +47,8 @@ Context template: "Found content keywords suggesting mature or age-restricted ma
 ### Check: ugc_without_moderation
 Guideline: 5.2.x
 Confidence: MEDIUM when user-generated content features are present without reporting or moderation mechanisms
+Risk: MED
+Finding template: "User-generated content features without reporting/moderation mechanism"
 
 #### Native iOS
 Grep for UI elements that accept user text or media input beyond login: `UITextView`, `UITextField` in non-auth contexts (search for "post", "comment", "message", "chat", "review", "upload" nearby). If UGC features are found, verify there is a report/flag mechanism: grep for "report", "flag", "block", "inappropriate", "abuse" in source. Check for moderation-related API calls or endpoints. Look for `MFMailComposeViewController` or in-app reporting sheets. Apple requires a mechanism for users to flag offensive UGC — its complete absence is a rejection trigger.
@@ -63,6 +69,8 @@ Context template: "Found user-generated content features ({ugc_features}) in {fi
 ### Check: missing_export_compliance
 Guideline: 5.2.x
 Confidence: LOW when ITSAppUsesNonExemptEncryption is missing from Info.plist
+Risk: LOW
+Finding template: "ITSAppUsesNonExemptEncryption missing from Info.plist"
 
 #### Native iOS
 Open `Info.plist` and search for `ITSAppUsesNonExemptEncryption`. If the key is absent entirely, App Store Connect will display an export compliance question on every build upload — and if answered incorrectly, the build may be blocked. If the app uses only standard HTTPS (via `NSURLSession`, `URLSession`, `Alamofire`) and no custom encryption, set `ITSAppUsesNonExemptEncryption` to `NO` to suppress the prompt. Grep for custom cryptography libraries: `CommonCrypto`, `CryptoKit` with non-standard algorithms, `OpenSSL`, `libsodium` — these may require `YES` and an encryption registration number (ERN).

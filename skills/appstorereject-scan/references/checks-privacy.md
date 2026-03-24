@@ -7,6 +7,8 @@
 ### Check: missing_privacy_manifest
 Guideline: 5.1.1
 Confidence: HIGH when no PrivacyInfo.xcprivacy file exists in an iOS project
+Risk: HIGH
+Finding template: "PrivacyInfo.xcprivacy missing — required since Spring 2024"
 
 #### Native iOS
 Search for `PrivacyInfo.xcprivacy` anywhere under the project root. Also check that the file is referenced in the Xcode project:
@@ -36,6 +38,8 @@ Context template: "No PrivacyInfo.xcprivacy found in project. Apple requires a p
 ### Check: missing_tracking_declaration
 Guideline: 5.1.1
 Confidence: HIGH when ATT framework is imported but NSUserTrackingUsageDescription is missing
+Risk: HIGH
+Finding template: "ATT framework imported without NSUserTrackingUsageDescription"
 
 #### Native iOS
 - Grep all `.swift`, `.m`, `.h` files for:
@@ -76,6 +80,8 @@ Context template: "App imports {tracking_framework} but is missing NSUserTrackin
 ### Check: missing_purpose_strings
 Guideline: 5.1.1
 Confidence: HIGH when hardware/data access frameworks are used without corresponding purpose strings
+Risk: HIGH
+Finding template: "{plist_key} missing for {framework} usage"
 
 #### Native iOS
 For each pair, grep source for the framework usage and check Info.plist for the key:
@@ -130,6 +136,8 @@ Context template: "Found {framework} usage in {source_file} but missing {plist_k
 ### Check: third_party_sdk_privacy
 Guideline: 5.1.1
 Confidence: MEDIUM when third-party SDKs are present but not declared in privacy manifest
+Risk: MED
+Finding template: "{sdk_count} third-party SDKs not declared in privacy manifest"
 
 #### Native iOS
 - Check `Podfile` or `Package.swift` for known SDKs that access required-reason APIs:
@@ -166,6 +174,8 @@ Context template: "Found {sdk_count} third-party SDKs that access required-reaso
 ### Check: undeclared_data_collection
 Guideline: 5.1.2
 Confidence: MEDIUM when network calls exist but no privacy nutrition label declarations found
+Risk: MED
+Finding template: "Data collection detected but not declared in App Store privacy nutrition label"
 
 #### Native iOS
 - Grep for network activity patterns:
@@ -199,6 +209,8 @@ Context template: "Found {network_call_count} network call sites across {file_co
 ### Check: missing_privacy_policy_url
 Guideline: 5.1.1
 Confidence: HIGH when no privacy policy URL is configured anywhere in the project
+Risk: HIGH
+Finding template: "No privacy policy URL found in project"
 
 #### Native iOS
 - Check `Info.plist` for custom keys containing "privacy" or "policy" (no standard key, but some apps embed it)
@@ -229,6 +241,8 @@ Context template: "No privacy policy URL found in project configuration or sourc
 ### Check: excessive_permissions
 Guideline: 5.1.1
 Confidence: MEDIUM when permissions are declared but corresponding APIs are never called in source code
+Risk: MED
+Finding template: "{unused_count} declared permissions with no corresponding API usage"
 
 #### Native iOS
 - Parse `Info.plist` for all `NS*UsageDescription` keys
@@ -267,6 +281,8 @@ Context template: "Found {unused_count} declared permissions with no correspondi
 ### Check: background_location
 Guideline: 5.1.1
 Confidence: HIGH when background location is declared without proper configuration or justification
+Risk: HIGH
+Finding template: "Background location declared without required configuration"
 
 #### Native iOS
 - Check `Info.plist` for `UIBackgroundModes` containing `location`
@@ -304,6 +320,8 @@ Context template: "Background location access detected: {bg_location_config}. Mi
 ### Check: contact_data_access
 Guideline: 5.1.1
 Confidence: MEDIUM when Contacts framework is imported without proper purpose string or with broad access patterns
+Risk: MED
+Finding template: "Contacts access detected without proper purpose string or with broad access"
 
 #### Native iOS
 - Grep for Contacts framework usage:
@@ -337,6 +355,8 @@ Context template: "Contacts access detected via {framework} in {source_files}. P
 ### Check: health_data_access
 Guideline: 5.1.1
 Confidence: HIGH when HealthKit entitlement exists without proper Info.plist descriptions
+Risk: HIGH
+Finding template: "HealthKit entitlement without required Info.plist descriptions"
 
 #### Native iOS
 - Check `*.entitlements` files for `com.apple.developer.healthkit`
@@ -372,6 +392,8 @@ Context template: "HealthKit entitlement found in {entitlements_file}. Missing d
 ### Check: android_dangerous_permissions
 Guideline: Data Safety
 Confidence: MEDIUM when dangerous permissions are declared without clear code-level justification
+Risk: MED
+Finding template: "{dangerous_count} dangerous Android permissions without clear justification"
 
 #### Native iOS
 - Not applicable (iOS uses purpose strings instead of permission tiers)
@@ -410,6 +432,8 @@ Context template: "Found {dangerous_count} dangerous Android permissions: {permi
 ### Check: missing_data_safety_section
 Guideline: Data Safety
 Confidence: HIGH when an Android app has no data safety metadata configured
+Risk: HIGH
+Finding template: "Android app has no data safety metadata configured"
 
 #### Native iOS
 - Not applicable (iOS uses App Store Connect privacy labels, configured outside the codebase)

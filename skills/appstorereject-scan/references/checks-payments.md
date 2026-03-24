@@ -7,6 +7,8 @@
 ### Check: external_payment_link
 Guideline: 3.1.1
 Confidence: HIGH when external payment URLs or SDKs are found in source code
+Risk: HIGH
+Finding template: "External payment URLs or SDKs found ({payment_refs})"
 
 #### Native iOS
 - Grep all `.swift`, `.m`, `.h`, `.storyboard`, `.xib` files for:
@@ -48,6 +50,8 @@ Context template: "Found external payment references in {file_count} files: {pay
 ### Check: missing_iap_implementation
 Guideline: 3.1.1
 Confidence: HIGH when premium features are detected but no IAP framework is integrated
+Risk: HIGH
+Finding template: "Premium features detected but no IAP framework integrated"
 
 #### Native iOS
 - Grep for premium/subscription indicators:
@@ -90,6 +94,8 @@ Context template: "Found {premium_indicator_count} premium/subscription indicato
 ### Check: iap_product_mismatch
 Guideline: 3.1.1
 Confidence: MEDIUM when IAP product IDs in code do not match StoreKit configuration
+Risk: MED
+Finding template: "IAP product IDs may not match store configuration"
 
 #### Native iOS
 - Grep source for product ID strings — typically formatted as `com.bundleid.product`:
@@ -124,6 +130,8 @@ Context template: "Found {product_id_count} IAP product IDs in source: {product_
 ### Check: subscription_no_restore
 Guideline: 3.1.2
 Confidence: HIGH when subscription IAP exists but no restore purchases flow is implemented (iOS)
+Risk: HIGH
+Finding template: "Subscription IAP without restore purchases mechanism"
 
 #### Native iOS
 - First confirm subscriptions exist:
@@ -159,6 +167,8 @@ Context template: "Subscription IAP detected ({subscription_products}) but no re
 ### Check: missing_subscription_disclosure
 Guideline: 3.1.2
 Confidence: MEDIUM when auto-renewing subscriptions exist without clear pricing/terms display
+Risk: MED
+Finding template: "Auto-renewing subscription without full pricing/terms display"
 
 #### Native iOS
 - Confirm auto-renewing subscriptions:
@@ -189,6 +199,8 @@ Context template: "Auto-renewing subscription detected but pricing/terms disclos
 ### Check: free_trial_no_disclosure
 Guideline: 3.1.2
 Confidence: MEDIUM when free trial is offered without clear post-trial pricing disclosure
+Risk: MED
+Finding template: "Free trial offered without post-trial pricing disclosure"
 
 #### Native iOS
 - Grep for trial indicators:
@@ -220,6 +232,8 @@ Context template: "Free trial offer detected in {trial_files}. Post-trial pricin
 ### Check: tip_jar_external
 Guideline: 3.1.1
 Confidence: HIGH when tip/donation features use external payment instead of IAP
+Risk: HIGH
+Finding template: "Tip/donation feature using external payment ({payment_method})"
 
 #### Native iOS
 - Grep for tip/donation indicators:
@@ -252,6 +266,8 @@ Context template: "Tip/donation feature detected in {tip_files} using external p
 ### Check: physical_goods_iap
 Guideline: 3.1.1
 Confidence: LOW when IAP appears to be used for physical goods (informational — should use external payment)
+Risk: LOW
+Finding template: "Possible physical goods sold via IAP instead of external payment"
 
 #### Native iOS
 - Grep for physical goods indicators near IAP code:
@@ -279,6 +295,8 @@ Context template: "Possible physical goods detected alongside IAP implementation
 ### Check: cross_platform_unlock
 Guideline: 3.1.1
 Confidence: MEDIUM when content appears to be unlocked via web purchase without in-app access
+Risk: MED
+Finding template: "Content unlocked via web purchase without in-app IAP alternative"
 
 #### Native iOS
 - Grep for web-purchase restoration patterns:
@@ -309,6 +327,8 @@ Context template: "Possible cross-platform purchase unlock detected. Server-side
 ### Check: android_billing_library_version
 Guideline: Billing
 Confidence: MEDIUM when Play Billing Library version is outdated
+Risk: MED
+Finding template: "Play Billing Library version {current_version} below required 6.0.0"
 
 #### Native iOS
 - Not applicable

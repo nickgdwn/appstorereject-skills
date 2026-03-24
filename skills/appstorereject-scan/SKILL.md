@@ -62,25 +62,36 @@ The graph defines which sections to check and in what order. Each section has sk
 For each section in the graph (unless skip condition is met):
 1. Read the section's check file: `{baseDir}/references/checks-<section>.md`
 2. Follow the framework-specific subsection matching step 1's detection
-3. Execute each check (use Grep, Glob, Read tools to inspect the codebase)
-4. Record findings in this format:
-   - `guidelineCode`: The guideline (e.g., "5.1.1")
-   - `confidence`: "high", "medium", or "low"
+3. **Execute EVERY check in the section** (use Grep, Glob, Read tools to inspect the codebase). Do NOT skip checks — evaluate all of them and only record a finding if the check triggers.
+4. Record findings using the **exact values from the check definition**:
+   - `guidelineCode`: Use the `Guideline:` value from the check definition
+   - `risk`: Use the `Risk:` value from the check definition exactly (HIGH, MED, or LOW). **Do NOT override this with your own judgment.**
    - `checkId`: The check identifier (e.g., "missing_privacy_manifest")
-   - `context`: A short description following the check's Context Template (max 200 chars, NO code snippets, NO file paths with usernames)
+   - `finding`: Use the `Finding template:` from the check definition, filling in any `{placeholders}` with values from your analysis
+   - `context`: A description following the check's Context Template (max 200 chars, NO code snippets, NO file paths with usernames)
+
+**Do NOT invent findings that aren't in the check definitions.** If you notice something concerning that has no matching check, mention it in a separate "Additional observations" section after the main table — not as a numbered finding.
 
 **Only load reference files for sections the graph reaches.** Skip sections whose skip condition is met.
 
+### 5b. Verify Findings
+
+Before presenting results, cross-reference your findings against the check definitions:
+1. For each finding, confirm the `Risk` level matches the check definition's `Risk:` field
+2. Confirm the `Guideline` matches the check definition's `Guideline:` field
+3. Confirm the `Finding` text follows the check's `Finding template:`
+4. Remove any findings that don't correspond to a defined check (move to "Additional observations")
+
 ### 6. Report to Developer
 
-Present findings as a summary table:
+Present findings as a summary table, sorted by risk (HIGH first, then MED, then LOW):
 
 ```
 | # | Guideline | Risk | Finding |
 |---|-----------|------|---------|
-| 1 | 5.1.1     | HIGH | PrivacyInfo.xcprivacy missing |
-| 2 | 3.1.1     | HIGH | External payment link detected |
-| 3 | 2.1       | MED  | Placeholder text in Settings screen |
+| 1 | 5.1.1     | HIGH | PrivacyInfo.xcprivacy missing — required since Spring 2024 |
+| 2 | 3.1.1     | HIGH | External payment URLs or SDKs found |
+| 3 | 2.1       | MED  | 3 placeholder/TODO instances in user-facing code |
 ```
 
 For HIGH and MEDIUM confidence findings, batch-fetch resolution details using the guideline codes from step 5:
