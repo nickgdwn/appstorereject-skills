@@ -43,7 +43,7 @@ Endpoints:
        Single rejection with solutions (auth: full details)
 
   GET  /api/rejections/batch?codes=<code1,code2,...>
-       Batch fetch up to 10 rejections by guideline code (e.g. 2.1,5.1.1)
+       Batch fetch up to 10 rejections by guideline code (e.g., 5.1.1,2.1)
        Also accepts ?slugs=<slug1,slug2,...> for lookup by slug
        Both params can be combined (total max 10)
 

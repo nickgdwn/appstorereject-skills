@@ -83,14 +83,24 @@ Present findings as a summary table:
 | 3 | 2.1       | MED  | Placeholder text in Settings screen |
 ```
 
-For HIGH confidence findings, batch-fetch resolution details using the guideline codes from step 5:
+For HIGH and MEDIUM confidence findings, batch-fetch resolution details using the guideline codes from step 5:
 ```
 {baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?codes=<code1>,<code2>,..."
 ```
 
 Example: `?codes=5.1.1,2.1,3.1.1` — the API accepts guideline codes directly (up to 10). You can also use `?slugs=<slug1>,<slug2>` if you have exact slugs from a prior search.
 
-Present each high-confidence finding with its resolution steps in the context of the developer's codebase. For medium/low findings, give a brief explanation and link to the full guide at appstorereject.com.
+The response returns `{"data": [...]}` where each item may include:
+- `resolutionSteps` — a **markdown string** (not an array). Display it directly as formatted text.
+- `solutions` — community-submitted solutions (authenticated requests only)
+- `exampleEmail` — example rejection email text
+
+**Displaying results:** For each finding, if the batch response included a matching entry:
+1. Show the resolution steps verbatim (they are already formatted markdown with numbered steps)
+2. Add context specific to the developer's codebase (e.g., which file to edit, what value to set)
+3. If a `prevention` section exists in the steps, include it
+
+If a finding's guideline code returned no match from the API, provide your own fix guidance based on the check definition. For LOW confidence findings, give a brief explanation and link to the full guide at appstorereject.com.
 
 ### 7. Report Analytics
 
