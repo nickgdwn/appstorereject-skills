@@ -68,6 +68,7 @@ For each section in the graph (unless skip condition is met):
    - `risk`: Use the `Risk:` value from the check definition exactly (HIGH, MED, or LOW). **Do NOT override this with your own judgment.**
    - `checkId`: The check identifier (e.g., "missing_privacy_manifest")
    - `finding`: Use the `Finding template:` from the check definition, filling in any `{placeholders}` with values from your analysis
+   - `slug`: Copy the `Slug:` value from the check definition **exactly as written** (e.g., `guideline-511-privacy-missing-privacy-manifest-2`). This is required for Step 6. If the check has `Slug: —`, record `—`.
    - `context`: A description following the check's Context Template (max 200 chars, NO code snippets, NO file paths with usernames)
 
 **Do NOT invent findings that aren't in the check definitions.** If you notice something concerning that has no matching check, mention it in a separate "Additional observations" section after the main table — not as a numbered finding.
@@ -80,11 +81,12 @@ Before presenting results, cross-reference your findings against the check defin
 1. For each finding, confirm the `Risk` level matches the check definition's `Risk:` field
 2. Confirm the `Guideline` matches the check definition's `Guideline:` field
 3. Confirm the `Finding` text follows the check's `Finding template:`
-4. Remove any findings that don't correspond to a defined check (move to "Additional observations")
+4. Confirm each finding has a `slug` value copied from the check definition (either a real slug or `—`)
+5. Remove any findings that don't correspond to a defined check (move to "Additional observations")
 
-### 6. Fetch & Present Resolution Guides (CRITICAL)
+### 6. Fetch & Present Resolution Guides (CRITICAL — THIS IS THE PRIMARY OUTPUT)
 
-Resolution guides are the **primary output** of this scan — they contain community-backed, tested resolution steps. The findings table alone is not sufficient.
+Resolution guides from the API are the **primary value** of this scan. The findings table alone is NOT sufficient. You MUST fetch and display the API's resolution steps. Do NOT skip this step. Do NOT substitute your own resolution advice.
 
 **6a. Present the findings table** sorted by risk (HIGH first, then MED, then LOW):
 
@@ -96,37 +98,39 @@ Resolution guides are the **primary output** of this scan — they contain commu
 | 3 | 2.1       | MED  | 3 placeholder/TODO instances in user-facing code |
 ```
 
-**6b. Collect slugs from your findings.** During step 5, each check definition includes a `Slug:` field. Collect the slugs for all HIGH and MED findings where `Slug:` is not `—`.
+**6b. Collect the `slug` values you recorded in Step 5.** Filter to HIGH and MED findings where slug is not `—`. These slugs come directly from the check definition files — you already recorded them. Do NOT guess, invent, or modify slug values.
 
-**6c. Batch-fetch resolution guides using the slugs:**
+Example slugs (from check definitions): `guideline-511-privacy-missing-privacy-manifest-2`, `guideline-21-app-completeness-placeholder-content-still-present-2`
+
+**6c. Batch-fetch resolution guides:**
 ```
 {baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?slugs=<slug1>,<slug2>,..."
 ```
 
-Example: `?slugs=guideline-511-privacy-missing-privacy-manifest-2,guideline-21-app-completeness-placeholder-content-still-present-2`
-
-Use the **exact slug values** from the check definitions. Do NOT invent, guess, or modify slugs.
+Use a **single comma-separated request** with all collected slugs.
 
 **6d. Validate the response:**
 
-The response returns `{"data": [...]}`. Check for these issues:
+The response returns `{"data": [...]}`. Handle these cases:
 
-1. **Empty response `{"data":[]}` is an error.** Report it to the developer: "Could not fetch resolution guides — slugs returned no matches. The findings table above lists your issues, but detailed resolution steps are unavailable." Do NOT silently substitute your own resolution steps.
+1. **Empty response `{"data":[]}` means the slugs didn't match.** This is unexpected since slugs come from the check definitions. Tell the developer: "Resolution guides could not be fetched — the API returned no matches for the recorded slugs. The findings table above lists your issues, but detailed resolution steps are unavailable." Do NOT silently substitute your own resolution steps.
 
-2. **Response items missing `resolutionSteps` field** means the request was **unauthenticated**. The API only returns resolution steps for authenticated requests. Tell the developer: "Resolution guides require an API key. Run `appstorereject --setup` to configure authentication, then re-scan."
+2. **Response items missing `resolutionSteps` field** means the request was **unauthenticated**. Tell the developer: "Resolution guides require an API key. Run `appstorereject --setup` to configure authentication, then re-scan."
 
-3. **Partial matches** (some slugs returned data, others didn't) — show resolution guides for the ones that matched. For unmatched slugs, note: "No resolution guide available yet for: {check_name}. See appstorereject.com for updates."
+3. **Partial matches** (some slugs returned data, others didn't) — show resolution guides for matched ones. For unmatched slugs, note: "No resolution guide available yet for: {check_name}. See appstorereject.com for updates."
+
+**⚠️ FAILURE MODE TO AVOID:** If the API returns a large response or the batch request returns empty, you may be tempted to skip reading the response and write your own advice instead. **Do not do this.** The API response IS the product. Read it, parse it, and present it. If the response is genuinely empty after using the correct slugs from the check definitions, say so — do not cover the gap with generated advice.
 
 **6e. Display resolution guides for each finding:**
 
 For each finding that has a matching API response with `resolutionSteps`:
-1. Show the `resolutionSteps` verbatim — they are a **markdown string** (not an array). Display directly as formatted text.
-2. Add context specific to the developer's codebase (e.g., which file to edit, what value to set)
+1. **Show `resolutionSteps` verbatim** — they are a markdown string. Display directly as formatted text. Do NOT paraphrase, summarize, or rewrite them.
+2. After the verbatim steps, add a **"In your codebase"** subsection with context specific to the developer's project (e.g., which file to edit, what value to set)
 3. If a `prevention` section exists in the steps, include it
 
-For findings where `Slug: —` (no resolution guide exists in the database yet), provide brief fix guidance based on the check definition and note that a full community guide is not yet available.
+For findings where slug is `—` (no resolution guide exists in the database yet), provide brief fix guidance based on the check definition and note: "A full community-tested resolution guide is not yet available for this check."
 
-**NEVER silently replace API resolution guides with your own generated steps.** The API guides are maintained by the community and contain tested, specific advice. LLM-generated alternatives are generic and may miss critical details.
+**NEVER silently replace API resolution guides with your own generated steps.** The API guides are community-maintained and contain tested, specific advice. Your role is to present them verbatim and add codebase-specific context — not to replace them.
 
 ### 7. Report Analytics
 
