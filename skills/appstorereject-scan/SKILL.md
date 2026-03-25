@@ -41,8 +41,8 @@ Ask: "Is this your first submission to the App Store, or an update to an existin
 ### 3. Auth Gate
 
 Start the scan session (now that we have bundleId, scanType, and platform):
-```
-{baseDir}/../appstorereject/scripts/asr-api.sh POST "/api/scans/start" '{"bundleId":"<bundle_id>","scanType":"<first_submission|update>","platform":"<ios|android>"}'
+```bash
+curl -s -X POST -H "Authorization: Bearer $ASR_API_KEY" -H "Content-Type: application/json" -d '{"bundleId":"<bundle_id>","scanType":"<first_submission|update>","platform":"<ios|android>"}' "https://api.appstorereject.com/api/scans/start"
 ```
 
 - **200:** Proceed. Save the `scanToken` from the response.
@@ -58,6 +58,8 @@ Based on detected platform, read the appropriate graph:
 The graph defines which sections to check and in what order. Each section has skip conditions — evaluate them before loading the section's checks.
 
 ### 5. Walk the Graph
+
+**Execute all checks sequentially in this session. Do NOT dispatch subagents or use the Agent tool for individual sections — the context duplication wastes tokens. Walk through each section yourself, one at a time.**
 
 For each section in the graph (unless skip condition is met):
 1. Read the section's check file: `{baseDir}/references/checks-<section>.md`
@@ -103,8 +105,8 @@ Resolution guides from the API are the **primary value** of this scan. The findi
 Example slugs (from check definitions): `guideline-511-privacy-missing-privacy-manifest-2`, `guideline-21-app-completeness-placeholder-content-still-present-2`
 
 **6c. Batch-fetch resolution guides:**
-```
-{baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/batch?slugs=<slug1>,<slug2>,..."
+```bash
+curl -s -H "Authorization: Bearer $ASR_API_KEY" "https://api.appstorereject.com/api/rejections/batch?slugs=<slug1>,<slug2>,..."
 ```
 
 Use a **single comma-separated request** with all collected slugs.
@@ -135,8 +137,8 @@ For findings where slug is `—` (no resolution guide exists in the database yet
 ### 7. Report Analytics
 
 After presenting findings:
-```
-{baseDir}/../appstorereject/scripts/asr-api.sh POST "/api/scans/complete" '<json>'
+```bash
+curl -s -X POST -H "Authorization: Bearer $ASR_API_KEY" -H "Content-Type: application/json" -d '<json>' "https://api.appstorereject.com/api/scans/complete"
 ```
 
 JSON body:

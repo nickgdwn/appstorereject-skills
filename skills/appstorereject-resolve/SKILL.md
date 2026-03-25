@@ -14,18 +14,28 @@ Determine the guideline code:
 - **If the developer pasted a rejection email:** Extract the guideline code (pattern: "Guideline X.Y.Z" or "Section X.Y"). Also note the specific reasons cited.
 - **If the developer gave a guideline code directly:** Use it (e.g., "2.1", "5.1.1", "3.1.1").
 - **If the developer described the issue in words:** Search for it:
-  ```
-  {baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/search?q=<keywords>&limit=5"
+  ```bash
+  curl -s "https://api.appstorereject.com/api/search?q=<keywords>&limit=5"
   ```
   Present the top matches and ask the developer to confirm which one.
 
 ## Step 2: Fetch Rejection Details
 
-Once you have the slug (from search results or known mapping):
+**Always start with the guideline code** — do NOT guess slugs. Use the batch endpoint to look up by code:
 
+```bash
+curl -s -H "Authorization: Bearer $ASR_API_KEY" "https://api.appstorereject.com/api/rejections/batch?codes=<guideline_code>"
 ```
-{baseDir}/../appstorereject/scripts/asr-api.sh GET "/api/rejections/detail?slug=<slug>"
+
+Example: `?codes=5.1.1` or `?codes=4.3,2.1` (comma-separated, up to 10).
+
+The response includes a `slug` field for each result. If you need the full detail view (solutions, before/after examples), use the returned slug:
+
+```bash
+curl -s -H "Authorization: Bearer $ASR_API_KEY" "https://api.appstorereject.com/api/rejections/detail?slug=<slug_from_batch_response>"
 ```
+
+**If you have a slug already** (e.g., from a prior search result), you can call the detail endpoint directly.
 
 **If authenticated:** You'll get full resolution steps, example rejection email, before/after examples, and community solutions.
 
@@ -65,8 +75,8 @@ The appeal is generated locally by you (the AI agent) — no API call needed. Pr
 
 After the developer resolves, appeals, or abandons:
 
-```
-{baseDir}/../appstorereject/scripts/asr-api.sh POST "/api/rejections/report" '{"bundleId":"<detected>","guidelineCode":"<code>","action":"resolved|appealed|abandoned","platform":"ios|android"}'
+```bash
+curl -s -X POST -H "Authorization: Bearer $ASR_API_KEY" -H "Content-Type: application/json" -d '{"bundleId":"<detected>","guidelineCode":"<code>","action":"resolved|appealed|abandoned","platform":"ios|android"}' "https://api.appstorereject.com/api/rejections/report"
 ```
 
 Auto-detect the bundleId from the project (Info.plist, build.gradle, app.json). If not detectable, ask the developer.

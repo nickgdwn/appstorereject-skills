@@ -24,12 +24,26 @@ If no `ASR_API_KEY` environment variable is set and `~/.appstorereject/config.js
 
 ## API Access
 
-All API calls go through `{baseDir}/scripts/asr-api.sh`. Never call curl directly.
+**Base URL:** `https://api.appstorereject.com`
 
-Usage:
-- `{baseDir}/scripts/asr-api.sh GET "/api/search?q=privacy+manifest"`
-- `{baseDir}/scripts/asr-api.sh POST "/api/scans/start" '{"bundleId":"com.example.app","scanType":"first_submission"}'`
-- `{baseDir}/scripts/asr-api.sh --help` — list all endpoints
+All API calls use curl. Resolve the API key in this order:
+1. `$ASR_API_KEY` environment variable
+2. `~/.appstorereject/config.json` → `apiKey` field
+
+**Authenticated request:**
+```bash
+curl -s -H "Authorization: Bearer $ASR_API_KEY" "https://api.appstorereject.com/api/rejections/batch?codes=5.1.1,2.1"
+```
+
+**Unauthenticated request (free endpoints):**
+```bash
+curl -s "https://api.appstorereject.com/api/search?q=privacy+manifest"
+```
+
+**POST request:**
+```bash
+curl -s -X POST -H "Authorization: Bearer $ASR_API_KEY" -H "Content-Type: application/json" -d '{"key":"value"}' "https://api.appstorereject.com/api/scans/start"
+```
 
 ## Routing
 
@@ -40,5 +54,5 @@ Determine what the developer needs:
 | Mentions a rejection, pastes a rejection email, references a guideline code (e.g., "2.1", "5.1.1", "3.1.1") | Activate `appstorereject-resolve` skill |
 | Asks to scan, check, prepare for submission, or review before submitting | Activate `appstorereject-scan` skill |
 | Ambiguous — just mentions "app store" or "rejection" generically | Ask: "Are you dealing with a rejection you've already received, or preparing for a submission?" |
-| Asks to search or browse rejections | Use the API directly: `{baseDir}/scripts/asr-api.sh GET "/api/search?q=<query>"` |
-| Asks about guideline changes | Use: `{baseDir}/scripts/asr-api.sh GET "/api/guideline-changes?limit=10"` |
+| Asks to search or browse rejections | Use the API directly: `curl -s "https://api.appstorereject.com/api/search?q=<query>"` |
+| Asks about guideline changes | Use: `curl -s "https://api.appstorereject.com/api/guideline-changes?limit=10"` |
