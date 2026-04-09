@@ -4,6 +4,8 @@
 **Status:** Approved
 **Goal:** Replace agent-driven scan decision-making with API-served check definitions and thin Node.js scripts, achieving consistent scan results, lower token costs, and instant check updates without user reinstallation.
 
+**Prerequisites:** Node.js 18+, curl, bash 4+
+
 ---
 
 ## Problem
@@ -39,15 +41,27 @@ Stores individual check definitions. Each check belongs to a section and contain
   slug: string | null,          // links to rejections table for resolution guides
   platforms: string[],          // ["ios"], ["android"], or ["ios", "android"]
   executionRules: {
-    native_ios?: string,        // grep/glob/read instructions for this framework
-    expo_managed?: string,
-    react_native_cli?: string,
-    native_android?: string,
+    native_ios: optional string,     // grep/glob/read instructions for this framework
+    expo_managed: optional string,
+    react_native_cli: optional string,
+    native_android: optional string,
   },
   active: boolean,              // allows disabling without deletion
   order: number,                // sort order within section
 }
 ```
+
+Convex schema validator:
+```typescript
+executionRules: v.object({
+  native_ios: v.optional(v.string()),
+  expo_managed: v.optional(v.string()),
+  react_native_cli: v.optional(v.string()),
+  native_android: v.optional(v.string()),
+})
+```
+
+Note: Adding a new framework (e.g., Flutter) requires a schema migration to add the key. This is acceptable — the framework list is stable and changes are infrequent.
 
 ### `scanGraph` table
 
@@ -69,6 +83,17 @@ Stores the section walk order per platform with structured skip conditions.
   },
   active: boolean,
 }
+```
+
+Convex schema validator for `skipCondition`:
+```typescript
+skipCondition: v.object({
+  allOf: v.array(v.union(
+    v.object({ noImports: v.array(v.string()) }),
+    v.object({ noDependencies: v.array(v.string()) }),
+    v.object({ noFiles: v.array(v.string()) }),
+  ))
+})
 ```
 
 **Key decisions:**
@@ -109,26 +134,36 @@ Response:
 }
 ```
 
-### `GET /api/scan/checks?section=privacy&framework=expo_managed&platform=ios`
+### `GET /api/scan/checks?sections=privacy,payments,completeness&framework=expo_managed&platform=ios&scanToken=<token>`
 
-Returns checks for a section, filtered to the requested framework's execution rules. Checks where `platforms` doesn't include the requested platform are excluded. **Auth required** — execution rules are the product's value.
+Returns checks for one or more sections in a single request, filtered to the requested framework's execution rules. Checks where `platforms` doesn't include the requested platform are excluded.
+
+**Auth:** Uses the `scanToken` from step 2 (`POST /api/scans/start`) rather than a separate Bearer token. The scanToken already proves the user is authorized for this scan — re-checking the API key on every section request is redundant. The endpoint validates that the scanToken exists, belongs to a started scan, and hasn't expired (1-hour window).
+
+**`sections` parameter:** Accepts a comma-separated list of section names. The agent runs `evaluate-section.js` for all sections locally first, determines which to skip, then makes **one** API call for all non-skipped sections. This reduces per-scan API calls from 8 sequential round-trips to 3 total (graph + bulk checks + guides).
 
 Response:
 ```json
 {
-  "section": "privacy",
   "framework": "expo_managed",
-  "checks": [
-    {
-      "checkId": "missing_privacy_manifest",
-      "guideline": "5.1.1",
-      "risk": "HIGH",
-      "findingTemplate": "PrivacyInfo.xcprivacy missing — required since Spring 2024",
-      "contextTemplate": "No PrivacyInfo.xcprivacy found in project...",
-      "slug": "guideline-511-privacy-missing-privacy-manifest-2",
-      "executionRule": "Read app.json or app.config.js / app.config.ts\nCheck for expo.ios.privacyManifests key\nIf missing, flag. If present, verify NSPrivacyAccessedAPITypes array is non-empty\nExpo SDK 51+ auto-generates a privacy manifest, but custom API usage still requires declaration"
+  "sections": {
+    "privacy": {
+      "checks": [
+        {
+          "checkId": "missing_privacy_manifest",
+          "guideline": "5.1.1",
+          "risk": "HIGH",
+          "findingTemplate": "PrivacyInfo.xcprivacy missing — required since Spring 2024",
+          "contextTemplate": "No PrivacyInfo.xcprivacy found in project...",
+          "slug": "guideline-511-privacy-missing-privacy-manifest-2",
+          "executionRule": "Read app.json or app.config.js / app.config.ts\nCheck for expo.ios.privacyManifests key\nIf missing, flag. If present, verify NSPrivacyAccessedAPITypes array is non-empty\nExpo SDK 51+ auto-generates a privacy manifest, but custom API usage still requires declaration"
+        }
+      ]
+    },
+    "payments": {
+      "checks": [...]
     }
-  ]
+  }
 }
 ```
 
@@ -140,7 +175,7 @@ Uses the existing `GET /api/rejections/batch?slugs=slug1,slug2,...` endpoint. No
 
 ## Scripts
 
-Four Node.js scripts in `skills/appstorereject-scan/scripts/`. Each takes CLI args or stdin, writes JSON to stdout.
+Four zero-dependency Node.js scripts in `skills/appstorereject-scan/scripts/`. Each writes JSON to stdout. Scripts that accept large payloads (findings, guides) read from temp files — never from CLI arguments — to avoid shell injection from codebase content appearing in findings.
 
 ### `detect-platform.js <project-path>`
 
@@ -172,9 +207,11 @@ Output:
 
 `detectedFiles` is included so skip conditions can reference file existence without additional lookups.
 
-### `evaluate-section.js <project-path> --section <name> --skip-condition '<json>'`
+### `evaluate-section.js <project-path> --graph-file <path-to-graph.json>`
 
-Takes a skip condition from the graph API response and evaluates it against the project files. Each condition type maps to a concrete file check:
+Evaluates skip conditions for ALL sections in one invocation. The agent writes the graph API response to a temp file, then passes the file path. The script checks each section's skip condition against the project files and returns which sections to scan.
+
+Each condition type maps to a concrete file check:
 - `noImports` → grep source files for the listed patterns
 - `noDependencies` → check package.json, Podfile, build.gradle
 - `noFiles` → glob for the listed file patterns
@@ -182,15 +219,23 @@ Takes a skip condition from the graph API response and evaluates it against the 
 Output:
 ```json
 {
-  "section": "privacy",
-  "skip": false,
-  "reason": "Found axios in package.json dependencies"
+  "results": [
+    { "section": "privacy", "skip": false, "reason": "Found axios in package.json dependencies" },
+    { "section": "payments", "skip": true, "reason": "No StoreKit/react-native-iap in dependencies, no premium/subscribe keywords found" },
+    { "section": "completeness", "skip": false, "reason": "Always checked" },
+    { "section": "performance", "skip": true, "reason": "No background modes declared, binary under 50MB" },
+    { "section": "design", "skip": false, "reason": "Custom UI components detected" },
+    { "section": "legal", "skip": true, "reason": "No user-generated content, no age-restricted content" }
+  ],
+  "sectionsToScan": ["privacy", "completeness", "design"]
 }
 ```
 
-### `collect-slugs.js --findings '<findings-json>'`
+The agent uses `sectionsToScan` to construct the single bulk `scan/checks` API call.
 
-Takes the agent's accumulated findings array and extracts slugs for HIGH and MED findings where slug is not null.
+### `collect-slugs.js --findings-file <path>`
+
+Reads the agent's accumulated findings from a temp file. Extracts slugs for HIGH and MED findings where slug is not null.
 
 Output:
 ```json
@@ -202,9 +247,11 @@ Output:
 }
 ```
 
-### `format-report.js --findings '<findings-json>' --guides '<guides-json>'`
+### `format-report.js --findings-file <path> --guides-file <path>`
 
-Merges findings with API guide responses and produces the final output structure.
+Reads findings and API guide responses from temp files. Merges them and produces the final output structure.
+
+Includes a framework mapping for the analytics payload — maps the granular framework taxonomy (`expo_managed`, `expo_bare`, `native_ios`, `react_native_cli`, `native_android`) to the existing `scans` table values (`expo`, `react-native`, `native`) for backward compatibility with historical scan data.
 
 Output:
 ```json
@@ -223,15 +270,30 @@ Output:
   "unguidedFindings": [
     { "checkId": "missing_accessibility_labels", "note": "No community guide available yet" }
   ],
-  "analyticsPayload": { "scanToken": "...", "bundleId": "...", "findings": [] }
+  "analyticsPayload": {
+    "scanToken": "...",
+    "bundleId": "...",
+    "platform": "ios",
+    "framework": "expo",
+    "findings": []
+  }
 }
 ```
+
+Framework mapping (granular → scans table):
+| Script value | `scans.framework` value |
+|---|---|
+| `expo_managed` | `expo` |
+| `expo_bare` | `react-native` |
+| `react_native_cli` | `react-native` |
+| `native_ios` | `native` |
+| `native_android` | `native` |
 
 ---
 
 ## Scan Flow
 
-The agent executes this sequence. Each step is a script call or API curl — no architectural decisions.
+The agent executes this sequence. Each step is a script call or API curl — no architectural decisions. Total API calls: **3** (auth + bulk checks + guides), down from up to 8 sequential calls.
 
 ```
 1. node detect-platform.js ./
@@ -242,32 +304,39 @@ The agent executes this sequence. Each step is a script call or API curl — no 
    → Save scanToken (or handle 403/401)
 
 3. curl GET /api/scan/graph?platform=<detected>
-   → Get ordered section list
+   → Save graph response to /tmp/asr-graph.json
 
-4. For each section in order:
-   a. node evaluate-section.js ./ --section <name> --skip-condition '<json>'
-      → If skip: true, move to next section
-   b. curl GET /api/scan/checks?section=<name>&framework=<detected>&platform=<detected>
-      → Get checks with single-framework execution rules
-   c. Execute each check's executionRule (Grep, Glob, Read against developer's project)
-   d. Record findings using exact JSON fields (guideline, risk, findingTemplate, slug)
+4. node evaluate-section.js ./ --graph-file /tmp/asr-graph.json
+   → Get sectionsToScan list (all skip conditions evaluated locally in one pass)
 
-5. node collect-slugs.js --findings '<accumulated-findings>'
+5. curl GET /api/scan/checks?sections=<comma-separated>&framework=<detected>&platform=<detected>&scanToken=<token>
+   → Get all non-skipped sections' checks in ONE request
+   → Save response to /tmp/asr-checks.json
+
+6. For each section in sectionsToScan order:
+   a. Read section's checks from /tmp/asr-checks.json
+   b. Execute each check's executionRule (Grep, Glob, Read against developer's project)
+   c. Record findings using exact JSON fields (guideline, risk, findingTemplate, slug)
+   d. Write accumulated findings to /tmp/asr-findings.json after each section
+
+7. node collect-slugs.js --findings-file /tmp/asr-findings.json
    → Get fetchCommand
 
-6. Run the fetchCommand from step 5
-   → Get resolution guides from API
+8. Run the fetchCommand from step 7
+   → Save guides response to /tmp/asr-guides.json
 
-7. node format-report.js --findings '<findings>' --guides '<guides-response>'
-   → Get formatted output
+9. node format-report.js --findings-file /tmp/asr-findings.json --guides-file /tmp/asr-guides.json
+   → Get formatted output with framework-mapped analyticsPayload
 
-8. For each guideSections entry, run codebaseContextPrompt searches
-   → Fill in "In your codebase" subsections
+10. For each guideSections entry, run codebaseContextPrompt searches
+    → Fill in "In your codebase" subsections
 
-9. Present findingsTable + guideSections + unguidedFindings to developer
+11. Present findingsTable + guideSections + unguidedFindings to developer
 
-10. curl POST /api/scans/complete with analyticsPayload
+12. curl POST /api/scans/complete with analyticsPayload from step 9
 ```
+
+**Temp file cleanup:** Scripts write to `/tmp/asr-*.json`. The agent should remove these after step 12 (`rm /tmp/asr-*.json`). If the scan is interrupted, the files are harmless — they contain check metadata, not user code or secrets.
 
 ---
 
@@ -319,10 +388,12 @@ Full scan token cost (including grep/glob execution, API responses, and presenta
 3. **Seed `scanGraph` table** — 12 entries (6 sections x 2 platforms) with structured skip conditions
 4. **Deploy new API endpoints** — `scan/graph` and `scan/checks` as Convex HTTP actions
 5. **Write and test scripts** — 4 Node.js scripts in `skills/appstorereject-scan/scripts/`
-6. **Rewrite SKILL.md** — streamlined script execution sequence
-7. **End-to-end test** — run scan with new flow against a real project
-
-Existing markdown files remain in the repo as reference documentation but are no longer read during scans.
+6. **Write vitest tests** — unit tests for all 4 scripts (mock fs for detect/evaluate, fixture JSON for collect/format)
+7. **Rewrite SKILL.md** — streamlined script execution sequence
+8. **Build `/admin/checks` page** — admin UI for editing check definitions, toggling active state, adjusting risk levels and execution rules (similar to existing `/admin/published` page)
+9. **Delete markdown check files** — remove `references/checks-*.md` and `references/graph-*.md` from the skills repo. The Convex tables are the single source of truth. The markdown files served as the initial content source and should not be kept as "reference documentation" — that creates drift.
+10. **Update README** — add Node.js 18+ to prerequisites
+11. **End-to-end test** — run scan with new flow against a real project
 
 ---
 
@@ -330,4 +401,8 @@ Existing markdown files remain in the repo as reference documentation but are no
 
 1. **Execution rules as strings** — the agent still interprets natural language instructions ("Grep for X, check Y"). This is intentional — fully structured tool commands would be more deterministic but much harder to author and maintain. The win is that the agent only sees one framework's rules instead of four.
 
-2. **API dependency** — if the API is down, the scan already fails at step 2 (auth gate). This design doesn't introduce new failure modes but does increase the number of API calls per scan (graph + checks per section). Latency impact is minimal since each call returns small JSON payloads.
+2. **API dependency** — if the API is down, the scan already fails at step 2 (auth gate). This design doesn't introduce new failure modes. The bulk `scan/checks` endpoint reduces total API calls to 3 per scan (down from up to 8), so latency impact is minimal.
+
+3. **Execution rule tampering** — the API returns instruction strings the agent executes as tool commands. If the `scanChecks` table were compromised, malicious execution rules could instruct the agent to read sensitive files. Mitigation: restrict `scanChecks` write access to admin users only, log all mutations via the existing audit log system.
+
+4. **Shell injection via findings** — findings may contain content from the developer's codebase. Scripts accept JSON payloads via temp files (not CLI arguments) to eliminate shell escaping vulnerabilities.
