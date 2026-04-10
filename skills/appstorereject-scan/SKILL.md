@@ -15,15 +15,12 @@ Execute these steps in order. Each step is a script call or API curl. Do NOT ski
 
 Before any authenticated API call, resolve the API key. Check in this order:
 
-1. `$ASR_API_KEY` environment variable — if set, use it
-2. `~/.appstorereject/config.json` — read the `apiKey` field
+1. Run `echo $ASR_API_KEY` — if non-empty, use that value
+2. If empty, read `~/.appstorereject/config.json` with the Read tool and extract the `apiKey` field value
 
-If found in the config file but not in the env var, set it for this session:
-```bash
-export ASR_API_KEY=$(cat ~/.appstorereject/config.json | grep -o '"apiKey"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"apiKey"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-```
+**Store the resolved key in your working memory.** You will use it directly in curl commands throughout this scan. In every authenticated curl command below, replace `$ASR_API_KEY` with the actual key value — do NOT rely on the shell env var, because each Bash call runs in a separate shell context and exports do not persist.
 
-If neither exists, tell the developer to set up an API key (see hub skill for setup instructions).
+If neither source has a key, tell the developer to set up an API key (see hub skill for setup instructions).
 
 ### 1. Detect Platform & Framework
 
