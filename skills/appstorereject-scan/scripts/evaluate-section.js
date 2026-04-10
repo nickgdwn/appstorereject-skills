@@ -30,7 +30,7 @@ try {
 }
 
 // Reject patterns with shell-unsafe characters (only allow alphanumeric, dots, stars, hyphens, underscores, slashes, spaces)
-const SAFE_PATTERN = /^[a-zA-Z0-9_.*?\-\/ @<>:{}()+,]+$/;
+const SAFE_PATTERN = /^[a-zA-Z0-9_.*?\-\/ @:{}()+,]+$/;
 function sanitizePattern(p) {
   if (typeof p !== "string" || !SAFE_PATTERN.test(p)) return null;
   return p;

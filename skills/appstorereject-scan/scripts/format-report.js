@@ -38,7 +38,9 @@ if (guidesFilePath) {
   try {
     const guidesResponse = JSON.parse(fs.readFileSync(guidesFilePath, "utf8"));
     guides = guidesResponse.data || [];
-  } catch {}
+  } catch (e) {
+    process.stderr.write(`Warning: could not parse guides file: ${e.message}\n`);
+  }
 }
 
 const guideMap = new Map();
@@ -74,13 +76,15 @@ for (const finding of sorted) {
         ? `Using the check context as guidance: ${finding.contextTemplate}`
         : `Search the developer's project for files related to guideline ${finding.guideline}. Report what you find.`,
     });
-  } else if (!finding.slug) {
+  } else {
     unguidedFindings.push({
       checkId: finding.checkId,
       guideline: finding.guideline,
       risk: finding.risk,
       finding: finding.finding,
-      note: "No community guide available yet",
+      note: finding.slug
+        ? "Resolution guide not found for slug: " + finding.slug
+        : "No community guide available yet",
     });
   }
 }
