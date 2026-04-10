@@ -37,6 +37,7 @@ Free tier includes 1 app, 1 scan/month, and unlimited rejection lookups. Full re
 
 ## Requirements
 
+- Node.js 18+
 - `curl` (for API calls)
 - `bash` 4+ (macOS users: `brew install bash` if on the default bash 3.2)
 
