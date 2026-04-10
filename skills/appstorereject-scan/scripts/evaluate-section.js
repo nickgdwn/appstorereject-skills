@@ -21,12 +21,27 @@ if (!graphFilePath) {
   process.exit(1);
 }
 
-const graph = JSON.parse(fs.readFileSync(graphFilePath, "utf8"));
+let graph;
+try {
+  graph = JSON.parse(fs.readFileSync(graphFilePath, "utf8"));
+} catch (e) {
+  process.stderr.write(`Error reading graph file: ${e.message}\n`);
+  process.exit(1);
+}
+
+// Reject patterns with shell-unsafe characters (only allow alphanumeric, dots, stars, hyphens, underscores, slashes, spaces)
+const SAFE_PATTERN = /^[a-zA-Z0-9_.*?\-\/ @<>:{}()+,]+$/;
+function sanitizePattern(p) {
+  if (typeof p !== "string" || !SAFE_PATTERN.test(p)) return null;
+  return p;
+}
 
 function grepProject(patterns) {
   for (const pattern of patterns) {
+    const safe = sanitizePattern(pattern);
+    if (!safe) continue;
     try {
-      const cmd = `grep -rl "${pattern}" ${JSON.stringify(projectPath)} --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.swift" --include="*.m" --include="*.h" --include="*.kt" --include="*.java" --include="*.xml" --include="*.json" -m 1 2>/dev/null`;
+      const cmd = `grep -rl ${JSON.stringify(safe)} ${JSON.stringify(projectPath)} --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.swift" --include="*.m" --include="*.h" --include="*.kt" --include="*.java" --include="*.xml" --include="*.json" -m 1 2>/dev/null`;
       const result = execSync(cmd, { encoding: "utf8", timeout: 10000 });
       if (result.trim()) return { found: true, pattern, file: result.trim().split("\n")[0] };
     } catch {}
@@ -54,8 +69,10 @@ function checkDependencies(patterns) {
 
 function checkFiles(patterns) {
   for (const pattern of patterns) {
+    const safe = sanitizePattern(pattern);
+    if (!safe) continue;
     try {
-      const cmd = `find ${JSON.stringify(projectPath)} -name "${pattern}" -maxdepth 5 2>/dev/null | head -1`;
+      const cmd = `find ${JSON.stringify(projectPath)} -name ${JSON.stringify(safe)} -maxdepth 5 2>/dev/null | head -1`;
       const result = execSync(cmd, { encoding: "utf8", timeout: 5000 });
       if (result.trim()) return { found: true, pattern, file: result.trim() };
     } catch {}

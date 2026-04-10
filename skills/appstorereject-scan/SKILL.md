@@ -93,8 +93,9 @@ If `fetchCommand` is null (no slugs to fetch), skip to step 9 with no guides fil
 
 ### 9. Format Report
 
+Pass the scan metadata from steps 1-2 so the analytics payload is complete:
 ```bash
-node {baseDir}/scripts/format-report.js --findings-file /tmp/asr-findings.json --guides-file /tmp/asr-guides.json
+node {baseDir}/scripts/format-report.js --findings-file /tmp/asr-findings.json --guides-file /tmp/asr-guides.json --scan-token <scanToken from step 2> --bundle-id <bundleId from step 1> --platform <platform> --framework <framework from step 1>
 ```
 
 ### 10. Present Results

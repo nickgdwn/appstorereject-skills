@@ -18,7 +18,13 @@ if (!findingsFilePath) {
   process.exit(1);
 }
 
-const findings = JSON.parse(fs.readFileSync(findingsFilePath, "utf8"));
+let findings;
+try {
+  findings = JSON.parse(fs.readFileSync(findingsFilePath, "utf8"));
+} catch (e) {
+  process.stderr.write(`Error reading findings file: ${e.message}\n`);
+  process.exit(1);
+}
 
 const slugs = [];
 const skipped = [];
