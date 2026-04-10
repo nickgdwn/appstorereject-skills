@@ -7,6 +7,20 @@ description: Resolve App Store or Google Play rejections. Look up rejection by g
 
 Help the developer resolve a rejection they've received from Apple or Google.
 
+## Step 0: Resolve API Key
+
+Before any authenticated API call, resolve the API key. Check in this order:
+
+1. `$ASR_API_KEY` environment variable — if set, use it
+2. `~/.appstorereject/config.json` — read the `apiKey` field
+
+If found in the config file but not in the env var, set it for this session:
+```bash
+export ASR_API_KEY=$(cat ~/.appstorereject/config.json | grep -o '"apiKey"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"apiKey"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+```
+
+If neither exists, tell the developer to set up an API key (see hub skill for setup instructions).
+
 ## Step 1: Identify the Rejection
 
 Determine the guideline code:
