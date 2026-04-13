@@ -40,7 +40,9 @@ curl -s -H "Authorization: Bearer $ASR_API_KEY" "https://api.appstorereject.com/
 
 Example: `?codes=5.1.1` or `?codes=4.3,2.1` (comma-separated, up to 10).
 
-The response includes a `slug` field for each result. If you need the full detail view (solutions, before/after examples), use the returned slug:
+The response includes a `slug` field for each result. **Save the slug to your working memory** — you will need it again in Step 6 to attribute analytics to the specific rejection.
+
+If you need the full detail view (solutions, before/after examples), use the returned slug:
 
 ```bash
 curl -s -H "Authorization: Bearer $ASR_API_KEY" "https://api.appstorereject.com/api/rejections/detail?slug=<slug_from_batch_response>"
@@ -87,7 +89,9 @@ The appeal is generated locally by you (the AI agent) — no API call needed. Pr
 After the developer resolves, appeals, or abandons:
 
 ```bash
-curl -s -X POST -H "Authorization: Bearer $ASR_API_KEY" -H "Content-Type: application/json" -d '{"bundleId":"<detected>","guidelineCode":"<code>","action":"resolved|appealed|abandoned","platform":"ios|android"}' "https://api.appstorereject.com/api/rejections/report"
+curl -s -X POST -H "Authorization: Bearer $ASR_API_KEY" -H "Content-Type: application/json" -d '{"bundleId":"<detected>","guidelineCode":"<code>","rejectionSlug":"<slug_from_step_2>","action":"resolved|appealed|abandoned","platform":"ios|android"}' "https://api.appstorereject.com/api/rejections/report"
 ```
+
+**Always include `rejectionSlug`** — use the slug you saved from Step 2's batch response. This attributes the report to the specific rejection on appstorereject.com (guideline codes alone are ambiguous because multiple rejections can share the same code). Resolved and appealed reports increment the rejection's public sighting count; abandoned reports are recorded for analytics only.
 
 Auto-detect the bundleId from the project (Info.plist, build.gradle, app.json). If not detectable, ask the developer.
