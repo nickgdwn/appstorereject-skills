@@ -23,13 +23,6 @@ function isUnderPrefix(target, prefix) {
   return target.startsWith(prefix + path.sep);
 }
 
-function isUnderHome(target) {
-  const home = path.resolve(os.homedir());
-  // Refuse $HOME itself; allow subdirs
-  if (target === home) return false;
-  return target.startsWith(home + path.sep);
-}
-
 function isUnderCwd(target) {
   const cwd = path.resolve(process.cwd());
   if (target === cwd) return true;
@@ -40,9 +33,6 @@ function validateProjectPath(input) {
   if (typeof input !== "string" || !input) {
     return { ok: false, error: "unsafe project path: <empty>" };
   }
-
-  // Check if input had a trailing slash before normalization
-  const hadTrailingSlash = input.endsWith(path.sep);
   const resolved = path.resolve(input);
 
   // 1. Must be an existing directory
@@ -56,24 +46,25 @@ function validateProjectPath(input) {
     return { ok: false, error: `unsafe project path: ${resolved}` };
   }
 
-  // 2. Deny-list (wins): refuse system dirs
+  // 2. Deny-list (wins): refuse system dirs and $HOME itself.
+  // Deny-list operates on the resolved path; trailing slashes in the input
+  // are normalized away by path.resolve and have no security significance.
   for (const prefix of DENY_PREFIXES) {
     if (isUnderPrefix(resolved, prefix)) {
       return { ok: false, error: `unsafe project path: ${resolved}` };
     }
   }
-
-  // 2b. Special case: reject $HOME with trailing slash
-  const home = path.resolve(os.homedir());
-  if (resolved === home && hadTrailingSlash) {
+  if (resolved === path.resolve(os.homedir())) {
     return { ok: false, error: `unsafe project path: ${resolved}` };
   }
 
-  // 3. Allow-list: under $HOME subdir, /home/<name>/..., /Users/<name>, or cwd subtree
+  // 3. Allow-list: any /Users/<name>/<subdir>... or /home/<name>/<subdir>...,
+  // or cwd subtree. The regex requires at least one path segment AFTER the
+  // username — bare /Users/<name> or /home/<name> would be someone's $HOME
+  // and must remain denied (step 2 catches the current user; this regex
+  // keeps the rule consistent for other users on shared systems).
   const allowed =
-    isUnderHome(resolved) ||
-    resolved.startsWith("/home/") ||
-    resolved.startsWith("/Users/") ||
+    /^\/(Users|home)\/[^/]+\/[^/]+/.test(resolved) ||
     isUnderCwd(resolved);
   if (!allowed) {
     return { ok: false, error: `unsafe project path: ${resolved}` };
