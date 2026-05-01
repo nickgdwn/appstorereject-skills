@@ -188,4 +188,96 @@ function doRead() {
   process.exit(0);
 }
 
-function doUpdate() { exitWith(1, "update: not implemented"); }
+function doUpdate() {
+  const answersFile = args["answers-file"];
+  const draftFile = args["draft-file"];
+
+  // Mutual exclusion
+  if (answersFile && draftFile) {
+    exitWith(1, "update: pass exactly one of --answers-file or --draft-file");
+  }
+  if (!answersFile && !draftFile) {
+    exitWith(1, "update: pass exactly one of --answers-file or --draft-file");
+  }
+
+  // Memory.md must exist for any update
+  if (!fs.existsSync(MEMORY_FILE)) {
+    exitWith(1, "update: memory.md does not exist; run init first");
+  }
+
+  // Parse existing (rejects malformed with exit 5)
+  let parsed;
+  try {
+    parsed = parseMemoryFile(MEMORY_FILE);
+  } catch (e) {
+    if (e.code === 5) exitWith(5, e.message);
+    throw e;
+  }
+
+  // Always update lastScanDate
+  parsed.lastScanDate = todayUtc();
+
+  let newBody = null;
+
+  if (answersFile) {
+    const payload = JSON.parse(fs.readFileSync(answersFile, "utf8"));
+    validateAnswersPayload(payload); // exits 1 on non-string leaf
+    deepMergeAnswers(parsed, payload);
+  }
+
+  if (draftFile) {
+    newBody = fs.readFileSync(draftFile, "utf8");
+  }
+
+  // Write back: frontmatter (always) + body (replaced if draft, preserved otherwise)
+  writeMemoryFile(parsed, newBody);
+
+  // Heal pass
+  try { fs.chmodSync(MEMORY_FILE, 0o600); } catch {}
+  if (!fs.existsSync(README_FILE)) {
+    const readmeTpl = fs.readFileSync(path.join(TEMPLATE_DIR, "README.md.tpl"), "utf8");
+    fs.writeFileSync(README_FILE, readmeTpl);
+  }
+  ensureGitignoreLine();
+
+  process.exit(0);
+}
+
+function writeMemoryFile(parsed, newBody) {
+  const dumped = yaml.dump(parsed, { schema: yaml.FAILSAFE_SCHEMA, lineWidth: 0 });
+  // If draft was provided, use it; else preserve existing body
+  let body;
+  if (newBody !== null) {
+    body = newBody.endsWith("\n") ? newBody : newBody + "\n";
+  } else {
+    const existing = fs.readFileSync(MEMORY_FILE, "utf8");
+    const m = existing.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n([\s\S]*)$/);
+    body = m ? m[1] : "\n";
+  }
+  fs.writeFileSync(MEMORY_FILE, `---\n${dumped}---\n${body}`);
+}
+
+function validateAnswersPayload(payload) {
+  // Stub for now — Task 7 implements full validation
+  if (!payload || typeof payload !== "object") {
+    exitWith(1, "update: answers payload must be an object");
+  }
+}
+
+function deepMergeAnswers(target, source) {
+  if (source.lastScanToken !== undefined) {
+    target.lastScanToken = source.lastScanToken;
+  }
+  if (source.items && typeof source.items === "object") {
+    target.items = target.items || {};
+    for (const [k, v] of Object.entries(source.items)) {
+      target.items[k] = { ...(target.items[k] || {}), ...v };
+    }
+  }
+  // Preserve any other top-level keys from source
+  for (const [k, v] of Object.entries(source)) {
+    if (k !== "items" && k !== "lastScanToken") {
+      target[k] = v;
+    }
+  }
+}
