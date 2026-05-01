@@ -258,10 +258,40 @@ function writeMemoryFile(parsed, newBody) {
 }
 
 function validateAnswersPayload(payload) {
-  // Stub for now — Task 7 implements full validation
-  if (!payload || typeof payload !== "object") {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     exitWith(1, "update: answers payload must be an object");
   }
+  if (payload.lastScanToken !== undefined) {
+    assertString("lastScanToken", payload.lastScanToken);
+  }
+  if (payload.items !== undefined) {
+    if (typeof payload.items !== "object" || Array.isArray(payload.items) || payload.items === null) {
+      exitWith(1, `update: non-string value at items: ${typeName(payload.items)}`);
+    }
+    for (const [itemName, itemValue] of Object.entries(payload.items)) {
+      if (!itemValue || typeof itemValue !== "object" || Array.isArray(itemValue)) {
+        exitWith(1, `update: non-string value at items.${itemName}: ${typeName(itemValue)}`);
+      }
+      if (itemValue.status !== undefined) {
+        assertString(`items.${itemName}.status`, itemValue.status);
+      }
+      if (itemValue.value !== undefined) {
+        assertString(`items.${itemName}.value`, itemValue.value);
+      }
+    }
+  }
+}
+
+function assertString(jsonPath, val) {
+  if (typeof val !== "string") {
+    exitWith(1, `update: non-string value at ${jsonPath}: ${typeName(val)}`);
+  }
+}
+
+function typeName(v) {
+  if (v === null) return "null";
+  if (Array.isArray(v)) return "array";
+  return typeof v;
 }
 
 function deepMergeAnswers(target, source) {
