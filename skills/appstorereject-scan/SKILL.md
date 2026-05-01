@@ -14,18 +14,21 @@ Execute these steps in order. Each step is a script call or API curl. Do NOT ski
 
 ### 0. Skill Version Check
 
-Before any other step, verify the installed skill version is supported. This runs unauthenticated so it works whether or not an API key is configured.
+Before any other step, verify the installed skill version is supported. Runs unauthenticated so it works whether or not an API key is configured.
 
 1. Read `{baseDir}/SKILL.md` and extract the `version:` field from the frontmatter. If absent, treat as `0.0.0`.
-2. Run:
+2. Run (capture both body and HTTP status):
    ```bash
-   curl -s "https://api.appstorereject.com/api/skill/version-check?installed=<skillVersion>&skill=appstorereject-scan"
+   curl -sw "\nHTTP %{http_code}\n" "https://api.appstorereject.com/api/skill/version-check?installed=<skillVersion>&skill=appstorereject-scan"
    ```
-3. Parse the response `{ supported, minVersion, message? }`. Tolerate additional unknown keys.
-4. Branch:
-   - `supported: true` → proceed.
-   - `supported: false` → display `message` to the developer and abort the entire scan with: "Please upgrade with `npx skills add nickgdwn/appstorereject-skills`." Do NOT continue.
-   - HTTP 404 / network error → log a stderr warning, continue (the version-check endpoint is advisory until backend support ships).
+3. Branch on HTTP status:
+   - **HTTP 200** with body `{ supported, minVersion, message? }`:
+     - `supported: true` → proceed silently.
+     - `supported: false` → display `message` to the developer and abort the entire scan with: "Please upgrade with `npx skills add nickgdwn/appstorereject-skills`." Do NOT continue.
+   - **HTTP 404** → silent continue. The version-check endpoint is not yet deployed in v1; this is the expected response. Do NOT log anything — it would be noise on every scan.
+   - **Other non-2xx OR network error** → log one stderr line `version-check unavailable, continuing` and proceed.
+
+Tolerate additional unknown keys in the response body for forward-compatibility.
 
 ### 0a. Resolve API Key
 
@@ -185,11 +188,14 @@ Otherwise:
    5. **Regulated industry** (`regulated`) — yes/no. If no → mark `na`. If yes → "What credentials/documentation do you have?"
    6. **Screen recording** (`screenRecording`) — last. Build a checklist from the recording-features JSON: "Your recording must show: launch → main flow → [auth flow if detected] → [purchase flow if detected] → [permissions: camera/location/etc] → [content reporting/blocking if UGC detected]." Ask "Have you recorded this on a physical device? [yes/not yet]". If "not yet" → mark `status: pending` and surface in the final checklist.
 
-4. **Save updated memory.** Build a JSON payload `{ items: { <name>: { status, value }, … }, lastScanToken }` (all leaf values must be strings) and run:
+4. **Save updated memory.** Build a JSON payload `{ items: { <name>: { status, value }, … }, lastScanToken }` (all leaf values must be strings) and write it via a quoted heredoc (NOT `echo` — apostrophes inside test credentials, app purpose strings, etc. break `echo '<json>'`):
    ```bash
-   echo '<json>' > /tmp/asr-${scanToken}/memory-answers.json
+   cat > /tmp/asr-${scanToken}/memory-answers.json <<'JSONEOF'
+   <json payload — single quotes around JSONEOF prevent shell variable expansion in the body>
+   JSONEOF
    node {baseDir}/scripts/manage-memory.js update --project ./ --answers-file /tmp/asr-${scanToken}/memory-answers.json
    ```
+   The single-quoted `'JSONEOF'` delimiter is critical: it disables `$variable`/`` `cmd` `` expansion inside the body so JSON containing `$`, backticks, or apostrophes lands intact.
 
 5. **Render the draft.**
    ```bash
