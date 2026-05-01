@@ -70,6 +70,56 @@ switch (subcommand) {
   default: exitWith(1, `unknown subcommand: ${subcommand}`);
 }
 
-function doInit() { exitWith(1, "init: not implemented"); }
+function doInit() {
+  const bundleId = args["bundle-id"];
+  if (!bundleId) exitWith(1, "init: --bundle-id is required");
+
+  // 1. Create .appstorereject/ (idempotent)
+  fs.mkdirSync(ASR_DIR, { recursive: true });
+
+  // 2. Write memory.md ONLY if it doesn't exist
+  if (!fs.existsSync(MEMORY_FILE)) {
+    const tpl = fs.readFileSync(path.join(TEMPLATE_DIR, "memory.md.tpl"), "utf8");
+    const content = tpl
+      .replace("{{BUNDLE_ID}}", bundleId)
+      .replace("{{TODAY}}", todayUtc());
+    fs.writeFileSync(MEMORY_FILE, content);
+  }
+
+  // 3. Always: chmod 600 (heals legacy installs)
+  try { fs.chmodSync(MEMORY_FILE, 0o600); } catch { /* Windows / non-POSIX no-op */ }
+
+  // 4. Write README.md ONLY if it doesn't exist
+  if (!fs.existsSync(README_FILE)) {
+    const readmeTpl = fs.readFileSync(path.join(TEMPLATE_DIR, "README.md.tpl"), "utf8");
+    fs.writeFileSync(README_FILE, readmeTpl);
+  }
+
+  // 5. Always: ensure .gitignore line
+  ensureGitignoreLine();
+
+  process.exit(0);
+}
+
+function ensureGitignoreLine() {
+  const LINE = ".appstorereject/";
+  let existing = "";
+  try {
+    existing = fs.readFileSync(GITIGNORE_FILE, "utf8");
+  } catch (e) {
+    if (e.code !== "ENOENT") {
+      // Permission or other; the write below may also fail; we'll handle that
+    }
+  }
+  const lines = existing.split("\n").map((l) => l.trim());
+  if (lines.includes(LINE)) return; // Idempotent
+  const append = (existing.length === 0 ? "" : (existing.endsWith("\n") ? "" : "\n")) + LINE + "\n";
+  try {
+    fs.appendFileSync(GITIGNORE_FILE, append);
+  } catch (e) {
+    process.stderr.write(`warning: could not append to .gitignore (${e.code}); add '${LINE}' manually\n`);
+  }
+}
+
 function doRead() { exitWith(1, "read: not implemented"); }
 function doUpdate() { exitWith(1, "update: not implemented"); }
