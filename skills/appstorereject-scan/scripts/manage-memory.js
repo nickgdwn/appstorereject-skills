@@ -121,5 +121,71 @@ function ensureGitignoreLine() {
   }
 }
 
-function doRead() { exitWith(1, "read: not implemented"); }
+function parseMemoryFile(filepath) {
+  const raw = fs.readFileSync(filepath, "utf8");
+  // Frontmatter is between the first two `---` lines
+  const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!m) {
+    throw Object.assign(new Error("missing frontmatter"), { code: 5 });
+  }
+  // Reject custom YAML tags as a defense-in-depth check (FAILSAFE_SCHEMA also refuses, but be explicit)
+  if (/!![a-zA-Z]+\/?[a-zA-Z]*/.test(m[1])) {
+    throw Object.assign(new Error("custom YAML tag"), { code: 5 });
+  }
+  let parsed;
+  try {
+    parsed = yaml.load(m[1], { schema: yaml.FAILSAFE_SCHEMA });
+  } catch (e) {
+    throw Object.assign(new Error("malformed YAML: " + e.message), { code: 5 });
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw Object.assign(new Error("frontmatter is not a mapping"), { code: 5 });
+  }
+  return parsed;
+}
+
+function doRead() {
+  const expectedBundleId = args["bundle-id"];
+
+  if (!fs.existsSync(MEMORY_FILE)) {
+    process.exit(2);
+  }
+
+  let parsed;
+  try {
+    parsed = parseMemoryFile(MEMORY_FILE);
+  } catch (e) {
+    if (e.code === 5) exitWith(5, e.message);
+    throw e;
+  }
+
+  // Schema version check
+  if (parsed.schemaVersion !== SCHEMA_VERSION) {
+    exitWith(4, `expected<=${SCHEMA_VERSION}, got=${parsed.schemaVersion}`);
+  }
+
+  // Bundle ID check
+  if (expectedBundleId && parsed.bundleId !== expectedBundleId) {
+    exitWith(3, `expected=${expectedBundleId} got=${parsed.bundleId}`);
+  }
+
+  // Warnings for unknown keys (non-fatal)
+  const KNOWN_TOP = ["schemaVersion", "bundleId", "lastScanDate", "lastScanToken", "items"];
+  for (const key of Object.keys(parsed)) {
+    if (!KNOWN_TOP.includes(key)) {
+      process.stderr.write(`warning: unknown frontmatter key: ${key}\n`);
+    }
+  }
+  if (parsed.items && typeof parsed.items === "object") {
+    for (const key of Object.keys(parsed.items)) {
+      if (!ITEM_KEYS.includes(key)) {
+        process.stderr.write(`warning: unknown item key: ${key}\n`);
+      }
+    }
+  }
+
+  process.stdout.write(JSON.stringify(parsed) + "\n");
+  process.exit(0);
+}
+
 function doUpdate() { exitWith(1, "update: not implemented"); }
